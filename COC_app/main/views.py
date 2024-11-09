@@ -11,19 +11,19 @@ def home(response):
     return render(response, "main/home.html", {})
 
 
-@login_required(login_url="/register/")
+@login_required(login_url='/register/')
 def settings(response):
     return render(response, "main/settings.html", {})
 
 
-@login_required(login_url="/register/")
+@login_required(login_url='/register/')
 def logout_view(request):
     logout(request)
 
-    return redirect("register")
+    return redirect("register:create_account")
 
 
-@login_required(login_url="/register/")
+@login_required(login_url='/register/')
 def change_username(request):
     if request.method == 'POST':
         new_username = request.POST.get('new_username')
@@ -49,7 +49,7 @@ def change_username(request):
     return render(request, 'main/change_username.html')
 
 
-@login_required(login_url="/register/")
+@login_required(login_url='/register/')
 def change_password(request):
     if request.method == 'POST':
         current_password = request.POST.get('current_password')

@@ -7,7 +7,7 @@ Create an Account
 
 {% block content %}
     <h1>Create an Account</h1>
-    <p>Already have an account? Login <a href="/login">here.</a></p>
+    <p>Already have an account? Login <a href="/register/login">here.</a></p>
     <form method="POST" class="form-group">
         {% csrf_token %}
         {{ form|crispy}}

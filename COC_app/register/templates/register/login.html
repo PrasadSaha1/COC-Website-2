@@ -12,6 +12,7 @@ Login
       {{ form|crispy }}
       <button type="submit" class="btn btn-success">Login</button>
       <p>Don't have an account? Create one <a href="/register"> here.</a></p>
-      <p>Forgot your password? <a href="/reset_password">Click here to reset it.</a></p>
+      <p>Forgot your username? Click <a href="/register/forgot_username">here</a> to retrieve it.</p>
+      <p>Forgot your password? Click <a href="/register/reset_password">here</a> to reset it.</p>
     </form>
 {% endblock %}
