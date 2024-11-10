@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 
+from main.api import find_clan_with_tag
 
 @login_required(login_url='/register/')
 def home(response):
@@ -76,3 +77,20 @@ def change_password(request):
         return JsonResponse({'status': 'success'})
 
     return render(request, "main/change_password.html", {})
+
+@login_required(login_url='/register/')
+def clan_search(request):
+    if request.method == "POST":
+        clan_tag = request.POST.get("clan_tag").replace("#", "").replace(" ", "").lower()
+        try:
+            clan_name, clan_tag, clan_type, clan_description, clan_members, clan_points = find_clan_with_tag(clan_tag, ["name", "tag", "type", "description", "members", "clanPoints"])
+        except KeyError:
+            return render(request, "main/clan_search.html", {"error": True})
+
+        return render(request, "main/clan_search.html", {"clan_name": clan_name, "clan_tag": clan_tag, "clan_type": clan_type,
+                    "clan_description": clan_description, "clan_members": clan_members, "clan_points": clan_points})
+    return render(request, "main/clan_search.html")
+
+@login_required(login_url='/register/')
+def my_clans(request):
+    return render(request, "main/my_clans.html")
