@@ -10,4 +10,5 @@ urlpatterns = [
     path("logout_view", views.logout_view, name="logout_view"),
     path("clan_search", views.clan_search, name="clan_search"),
     path("my_clans", views.my_clans, name="my_clans"),
+    path("toggle_save_clan/<clan_tag>/", views.toggle_save_clan, name="toggle_save_clan"),
 ]

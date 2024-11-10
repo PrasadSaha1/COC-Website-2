@@ -5,7 +5,8 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 
-from main.api import find_clan_with_tag
+from main.api import find_clan_with_tag, get_clan_badge, clean_tag
+from .models import SavedClan
 
 @login_required(login_url='/register/')
 def home(response):
@@ -81,16 +82,74 @@ def change_password(request):
 @login_required(login_url='/register/')
 def clan_search(request):
     if request.method == "POST":
-        clan_tag = request.POST.get("clan_tag").replace("#", "").replace(" ", "").lower()
+        old_tag = clean_tag(request.POST.get("clan_tag"))
         try:
-            clan_name, clan_tag, clan_type, clan_description, clan_members, clan_points = find_clan_with_tag(clan_tag, ["name", "tag", "type", "description", "members", "clanPoints"])
+            clan_name, clan_tag, clan_type, clan_description, clan_members, clan_points = find_clan_with_tag(old_tag, ["name", "tag", "type", "description", "members", "clanPoints"])
+            clan_badge = get_clan_badge(old_tag)
+            in_database = SavedClan.objects.filter(user=request.user, clan_tag=old_tag).first()
         except KeyError:
             return render(request, "main/clan_search.html", {"error": True})
-
         return render(request, "main/clan_search.html", {"clan_name": clan_name, "clan_tag": clan_tag, "clan_type": clan_type,
-                    "clan_description": clan_description, "clan_members": clan_members, "clan_points": clan_points})
+                    "clan_description": clan_description, "clan_members": clan_members, "clan_points": clan_points, "clan_badge": clan_badge, "saved": in_database})
     return render(request, "main/clan_search.html")
 
 @login_required(login_url='/register/')
+def toggle_save_clan(request, clan_tag):
+    saved_clan = SavedClan.objects.filter(user=request.user, clan_tag=clean_tag(clan_tag)).first()
+    clan_name = find_clan_with_tag(clean_tag(clan_tag), ["name"])
+    saved_clan_count = SavedClan.objects.filter(user=request.user).count()
+    change = None
+
+    if saved_clan:
+        saved_clan.delete()
+        change = "clan_removed"
+    elif saved_clan_count < 5:
+        SavedClan.objects.create(user=request.user, clan_tag=clean_tag(clan_tag))
+        change = "clan_saved"
+    else:
+        change = "too_many_clans"
+
+    # Get the list of clans to display
+    clans_data = []
+    for clan in SavedClan.objects.filter(user=request.user):
+        clan_info = find_clan_with_tag(clean_tag(clan.clan_tag), ["name", "tag", "type", "description", "members", "clanPoints"])
+        clan_badge = get_clan_badge(clean_tag(clan.clan_tag))
+        
+        # Prepare the data to pass to the template
+        clans_data.append({
+            'name': clan_info[0],
+            'tag': clan_info[1],
+            'type': clan_info[2],
+            'description': clan_info[3],
+            'members': clan_info[4],
+            'clan_points': clan_info[5],
+            'badge': clan_badge,
+        })
+
+    return render(request, "main/my_clans.html", {
+        "change": change,
+        "clan_name": clan_name[0],
+        "clans": clans_data  # Pass the clans data here
+    })
+
+@login_required(login_url='/register/')
 def my_clans(request):
-    return render(request, "main/my_clans.html")
+    clans_data = []
+
+    # Iterate through each saved clan for the logged-in user
+    for clan in SavedClan.objects.filter(user=request.user):
+        clan_info = find_clan_with_tag(clean_tag(clan.clan_tag), ["name", "tag", "type", "description", "members", "clanPoints"])
+        clan_badge = get_clan_badge(clean_tag(clan.clan_tag))
+        
+        # Prepare the data to pass to the template
+        clans_data.append({
+            'name': clan_info[0],
+            'tag': clan_info[1],
+            'type': clan_info[2],
+            'description': clan_info[3],
+            'members': clan_info[4],
+            'clan_points': clan_info[5],
+            'badge': clan_badge,
+        })
+
+    return render(request, "main/my_clans.html", {'clans': clans_data})
