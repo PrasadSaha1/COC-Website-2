@@ -21,3 +21,8 @@ def get_clan_badge(clan_tag):
 def clean_tag(clan_tag):
     return clan_tag.replace("#", "").replace(" ", "").upper()
 
+def get_member_data(clan_tag):
+    response = requests.get(f"https://api.clashofclans.com/v1/clans/%23{clan_tag}/members", headers=headers)
+    response_json = response.json()
+    return response_json
+

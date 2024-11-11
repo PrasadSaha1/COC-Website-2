@@ -1,0 +1,294 @@
+{% extends 'main/base.html' %}
+
+<div id="content" style="position: relative;">
+    {% block content %}
+    <!-- Back button positioned at the top left corner -->
+    <button onclick="goBack()" class="back-button">Back</button>
+    
+    <h1>Clan Members</h1>
+    
+    <!-- Center the buttons and add margin between buttons and table -->
+    <div class="button-container">
+        <button class="nav-button">General</button>
+        <button class="nav-button">Home Village</button>
+        <button class="nav-button">Builder Base</button>
+    </div>
+    
+    <table id="sortableTable" class="sortable-table">
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">Name <span class="sort-arrow"></span></th>
+                <th onclick="sortTable(1)">Tag <span class="sort-arrow"></span></th>
+                <th onclick="sortTable(2)">Townhall Level <span class="sort-arrow"></span></th>
+                <th onclick="sortTable(3)">Role <span class="sort-arrow"></span></th>
+                <th onclick="sortTable(4)">Trophies <span class="sort-arrow"></span></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in member_data.items %}
+            <tr>
+                <td>{{ member.name }}</td>
+                <td>{{ member.tag }}</td>
+                <td>{{ member.townHallLevel }}</td>
+                <td>
+                    {% if member.role == "leader" %} Leader
+                    {% elif member.role == "coLeader" %} Co-Leader
+                    {% elif member.role == "admin" %} Elder
+                    {% elif member.role == "member" %} Member
+                    {% else %} {{ member.role }} {% endif %}
+                </td>
+                <td>{{ member.trophies }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+
+        let currentSortColumn = 4; // Default column is Trophies (index 4)
+        let sortDirection = 'desc'; // Default sort direction is descending (highest first)
+        
+        // Define role hierarchy (Leader > Co-Leader > Elder > Member)
+        const roleHierarchy = {
+            'leader': 1,
+            'co-leader': 2,
+            'elder': 3,
+            'member': 4
+        };
+
+        // Function to sort the table
+        function sortTable(n) {
+            const table = document.getElementById("sortableTable");
+            let rows, switching, i, x, y, shouldSwitch;
+
+            switching = true;
+            let dir = sortDirection; // Use current sort direction
+
+            // Define sorting order for specific columns
+            if (n === 0) { // Name or Townhall Level (asc-desc-none)
+                if (n === currentSortColumn) {
+                    if (dir === 'asc') {
+                        dir = 'desc'; // Change to descending
+                    } else if (dir === 'desc') {
+                        dir = 'default'; // Change to default
+                    } else {
+                        dir = 'asc'; // Change back to ascending
+                    }
+                } else {
+                    dir = 'asc'; // Reset direction to ascending for a new column
+                }
+            } else if (n === 2 || n == 4) { // Trophies column (desc-asc-none)
+                if (n === currentSortColumn) {
+                    if (dir === 'desc') {
+                        dir = 'asc'; // Change to ascending
+                    } else if (dir === 'asc') {
+                        dir = 'default'; // Change to default
+                    } else {
+                        dir = 'desc'; // Change back to descending
+                    }
+                } else {
+                    dir = 'desc'; // Reset direction to descending for a new column
+                }
+            } else { // For other columns (Tag and Role)
+                if (n === currentSortColumn) {
+                    if (dir === 'asc') {
+                        dir = 'desc'; // Change to descending
+                    } else if (dir === 'desc') {
+                        dir = 'default'; // Change to default
+                    } else {
+                        dir = 'asc'; // Change back to ascending
+                    }
+                } else {
+                    dir = 'asc'; // Reset direction to ascending for a new column
+                }
+            }
+
+            sortDirection = dir;
+            currentSortColumn = n; // Update the current column index
+
+            // Reset arrows before sorting
+            resetArrows();
+
+            // Add the current sorting direction arrow to the header
+            addArrow(n, dir);
+
+            while (switching) {
+                switching = false;
+                rows = table.rows;
+
+                // Loop through all table rows (except the first row with headers)
+                for (i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName("TD")[n];
+                    y = rows[i + 1].getElementsByTagName("TD")[n];
+
+                    // Custom sorting logic for the Role column (index 3)
+                    if (n === 3) { // Role column (index 3)
+                        let xRole = roleHierarchy[x.innerHTML.trim().toLowerCase()];
+                        let yRole = roleHierarchy[y.innerHTML.trim().toLowerCase()];
+
+                        if (dir === "asc") {
+                            if (xRole > yRole) {
+                                shouldSwitch = true;
+                                break;
+                            }
+                        } else if (dir === "desc") {
+                            if (xRole < yRole) {
+                                shouldSwitch = true;
+                                break;
+                            }
+                        }
+                    } else { // For other columns, use the default string-based comparison
+                        if (dir === "asc") {
+                            if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                                shouldSwitch = true;
+                                break;
+                            }
+                        } else if (dir === "desc") {
+                            if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                                shouldSwitch = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                }
+            }
+
+            // Reset table to default (sorted by Trophies in descending order)
+            if (dir === 'default') {
+                resetTableToDefault();
+            }
+        }
+
+        // Reset the table to default sorting (by Trophies in descending order)
+        function resetTableToDefault() {
+            const table = document.getElementById("sortableTable");
+            let rows = table.rows;
+
+            // Sort the table rows by Trophies in descending order
+            let sortedRows = Array.from(rows).slice(1).sort((a, b) => {
+                let x = parseInt(a.cells[4].innerText, 10); // Trophies column
+                let y = parseInt(b.cells[4].innerText, 10);
+                return y - x; // Descending order
+            });
+
+            // Reorder the table rows based on the sorted order
+            sortedRows.forEach(row => table.appendChild(row));
+        }
+
+        // Reset arrows
+        function resetArrows() {
+            const arrows = document.querySelectorAll('.sort-arrow');
+            arrows.forEach(arrow => {
+                arrow.innerHTML = ''; // Remove any arrows
+            });
+        }
+
+        // Add the sorting arrow
+        function addArrow(n, dir) {
+            const header = document.querySelectorAll('th')[n];
+            const arrow = header.querySelector('.sort-arrow');
+            if (dir === 'asc') {
+                arrow.innerHTML = '▲'; // Ascending arrow
+            } else if (dir === 'desc') {
+                arrow.innerHTML = '▼'; // Descending arrow
+            }
+        }
+
+        // Initialize the table to be sorted by Trophies in descending order on page load
+        window.onload = resetTableToDefault;
+    </script>
+
+    <style>
+        /* Table styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+
+        th {
+            cursor: pointer;
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+
+        th:hover {
+            background-color: #ddd;
+        }
+
+        .sort-arrow {
+            margin-left: 8px;
+            font-size: 1em;
+        }
+
+        /* Hover effect on rows */
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Center table headers and content */
+        table {
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        /* Center the buttons and add margin between buttons and table */
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .nav-button {
+            padding: 10px 20px;
+            background-color: #007bff; /* Blue button */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-button:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+
+        .back-button {
+            position: absolute;
+            top: 10px;
+            left: 180px; /* Offset to the right of the sidebar */
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10; /* Ensure it is above other content */
+            transition: background-color 0.3s ease;
+        }
+        
+    </style>
+    {% endblock %}
+</div>
