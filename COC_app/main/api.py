@@ -26,3 +26,7 @@ def get_member_data(clan_tag):
     response_json = response.json()
     return response_json
 
+def get_all_clan_data(clan_tag):
+    response = requests.get(f"https://api.clashofclans.com/v1/clans/%23{clan_tag}", headers=headers)
+    response_json = response.json()
+    return response_json

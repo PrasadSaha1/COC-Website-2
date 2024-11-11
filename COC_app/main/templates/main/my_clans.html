@@ -35,7 +35,7 @@
                 <p><strong>Members:</strong> {{ clan.members }}</p>
                 <p><strong>Clan Points:</strong> {{ clan.clan_points }}</p>
                 
-                <form method="post" action="{% url 'view_clan' clan.tag %}" class="button-form">
+                <form method="post" action="{% url 'view_clan' clan.tag 'general' %}" class="button-form">
                     {% csrf_token %}
                     <input type="hidden" name="clan_tag" value="{{ clan.tag }}">
                     <button type="submit" name="view_clan" class="view-button">View Clan</button>

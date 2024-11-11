@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 
-from main.api import find_clan_with_tag, get_clan_badge, clean_tag, get_member_data
+from main.api import find_clan_with_tag, get_clan_badge, clean_tag, get_member_data, get_all_clan_data
 from .models import SavedClan
 
 @login_required(login_url='/register/')
@@ -155,6 +155,8 @@ def my_clans(request):
     return render(request, "main/my_clans.html", {'clans': clans_data})
 
 @login_required(login_url='/register/')
-def view_clan(request, clan_tag):
+def view_clan(request, clan_tag, mode):
     member_data = get_member_data(clean_tag(clan_tag))
-    return render(request, "main/view_clan.html", {"member_data": member_data})
+    clan_data = get_all_clan_data(clean_tag(clan_tag))
+
+    return render(request, "main/view_clan.html", {"member_data": member_data, "clan_tag": clan_tag, "mode": mode, "clan_data": clan_data,})
