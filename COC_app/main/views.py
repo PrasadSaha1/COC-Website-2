@@ -5,8 +5,8 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 
-from main.api import find_clan_with_tag, get_clan_badge, clean_tag, get_member_data, get_all_clan_data
-from .models import SavedClan
+from main.api import find_clan_with_tag, get_clan_badge, clean_tag, get_member_data, get_all_clan_data, get_all_player_data
+from .models import SavedClan, SavedPlayer
 
 @login_required(login_url='/register/')
 def home(response):
@@ -82,16 +82,26 @@ def change_password(request):
 @login_required(login_url='/register/')
 def clan_search(request):
     if request.method == "POST":
-        old_tag = clean_tag(request.POST.get("clan_tag"))
-        try:
-            clan_name, clan_tag, clan_type, clan_description, clan_members, clan_points = find_clan_with_tag(old_tag, ["name", "tag", "type", "description", "members", "clanPoints"])
-            clan_badge = get_clan_badge(old_tag)
-            in_database = SavedClan.objects.filter(user=request.user, clan_tag=old_tag).first()
-        except KeyError:
-            return render(request, "main/clan_search.html", {"error": True})
-        return render(request, "main/clan_search.html", {"clan_name": clan_name, "clan_tag": clan_tag, "clan_type": clan_type,
-                    "clan_description": clan_description, "clan_members": clan_members, "clan_points": clan_points, "clan_badge": clan_badge, "saved": in_database})
+        search_type = request.POST.get("search_type") 
+        if search_type == "clan":
+            old_tag = clean_tag(request.POST.get("clan_tag"))
+            try:
+                clan_name, clan_tag, clan_type, clan_description, clan_members, clan_points = find_clan_with_tag(old_tag, ["name", "tag", "type", "description", "members", "clanPoints"])
+                clan_badge = get_clan_badge(old_tag)
+                in_database = SavedClan.objects.filter(user=request.user, clan_tag=old_tag).first()
+            except KeyError:
+                return render(request, "main/clan_search.html", {"error": "clan"})
+            return render(request, "main/clan_search.html", {"clan_name": clan_name, "clan_tag": clan_tag, "clan_type": clan_type,
+                        "clan_description": clan_description, "clan_members": clan_members, "clan_points": clan_points, "clan_badge": clan_badge, "saved": in_database})
+        else:
+            tag = clean_tag(request.POST.get("clan_tag"))
+            player_data = get_all_player_data(clean_tag(tag))
+            in_database = SavedPlayer.objects.filter(user=request.user, player_tag=tag).first()
+            if player_data == {'reason': 'notFound'}:
+                return render(request, "main/clan_search.html", {"error": "player", "player_data": "error"})
+            return render(request, "main/clan_search.html", {"player_data": player_data, "saved": in_database})
     return render(request, "main/clan_search.html")
+
 
 @login_required(login_url='/register/')
 def toggle_save_clan(request, clan_tag):
@@ -133,6 +143,35 @@ def toggle_save_clan(request, clan_tag):
     })
 
 @login_required(login_url='/register/')
+def toggle_save_player(request, player_tag):
+    saved_player = SavedPlayer.objects.filter(user=request.user, player_tag=clean_tag(player_tag)).first()
+    player_name = get_all_player_data(clean_tag(player_tag))["name"]
+    print(player_name)
+    saved_player_count = SavedPlayer.objects.filter(user=request.user).count()
+    change = None
+
+    if saved_player:
+        saved_player.delete()
+        change = "player_removed"
+    elif saved_player_count < 10:
+        SavedPlayer.objects.create(user=request.user, player_tag=clean_tag(player_tag))
+        change = "player_saved"
+    else:
+        change = "too_many_players"
+    players_data = []
+
+    for player in SavedPlayer.objects.filter(user=request.user):
+        data = get_all_player_data(clean_tag(player.player_tag))
+        players_data.append(data)
+
+    return render(request, "main/my_players.html", {
+        "change": change,
+        "player_name": player_name,
+        "players": players_data
+    })
+
+
+@login_required(login_url='/register/')
 def my_clans(request):
     clans_data = []
 
@@ -160,3 +199,18 @@ def view_clan(request, clan_tag, mode):
     clan_data = get_all_clan_data(clean_tag(clan_tag))
 
     return render(request, "main/view_clan.html", {"member_data": member_data, "clan_tag": clan_tag, "mode": mode, "clan_data": clan_data,})
+
+@login_required(login_url='/register/')
+def my_players(request):
+    players_data = []
+
+    for player in SavedPlayer.objects.filter(user=request.user):
+        data = get_all_player_data(clean_tag(player.player_tag))
+        players_data.append(data)
+
+    return render(request, "main/my_players.html", {'players': players_data})
+
+@login_required(login_url='/register/')
+def view_player(request, player_tag):
+    player = get_all_player_data(clean_tag(player_tag))
+    return render(request, "main/view_player.html", {"player": player})

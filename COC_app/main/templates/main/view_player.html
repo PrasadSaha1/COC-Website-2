@@ -1,0 +1,323 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+<div id="content">
+    {% block content %}
+    <div style="text-align: center;">
+        <h3 style="margin: 0;">{{player.name}}</h3>
+        <h5 style="margin: 5px 0; color: #666;">{{player.tag}}</h5>
+    </div>
+
+    
+    <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
+        <!-- Home Village Basics Section -->
+        <div style="width: 50%; text-align: left; line-height: 1.6; background-color: #e28743; padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="width: 60%;">
+                <h2 style="text-align: center; margin-bottom: 20px;">Home Village Basics</h2>
+                <p><strong>Town Hall:</strong> {{ player.townHallLevel }}</p>
+                <p><strong>Trophies:</strong> {{ player.trophies }}</p>
+                <p><strong>Best Trophies:</strong> {{ player.bestTrophies }}</p>
+            </div>
+            <div style="flex-shrink: 0;">
+                {% if player.league %}
+                    <img src="{{ player.league.iconUrls.medium }}" style="max-width: 150px;">
+                {% else %}
+                    <img src="{% static 'images/unranked_badge.webp' %}" style="max-width: 150px;">
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Builder Base Basics Section (No Image) -->
+        <div style="width: 50%; margin: 0 auto; text-align: left; line-height: 1.6; background-color: #e28743; padding: 20px; border-radius: 8px;">
+            <div style="width: 60%;">
+                <h2 style="text-align: center; margin-bottom: 20px;">Builder Base Basics</h2>
+                <p><strong>Trophies:</strong> {{ player.builderBaseTrophies }}</p>
+                <p><strong>Best Trophies:</strong> {{ player.bestBuilderBaseTrophies }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Row with One Section Centered -->
+    <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
+        <!-- Home Village Basics Section -->
+        <div style="width: 50%; text-align: left; line-height: 1.6; background-color: #e28743; padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="width: 60%;">
+                <h2 style="text-align: center; margin-bottom: 20px;">Clan Information</h2>
+                <img src="{{ player.clan.badgeUrls.medium }}" style="max-width: 150px;">
+                <p><strong>Clan Name:</strong> {{ player.clan.name }}</p>
+                <p><strong>Clan Tag:</strong> {{ player.clan.tag }}</p>
+                <p><strong>Role:</strong> 
+                    {% if player.role == "leader" %} Leader
+                    {% elif player.role == "coLeader" %} Co-Leader
+                    {% elif player.role == "admin" %} Elder
+                    {% elif player.role == "member" %} Member
+                    {% else %} {{ player.role }} {% endif %}
+                </p>
+                <form method="post" action="{% url 'view_clan' player.clan.tag 'general' %}" class="button-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="player_tag" value="{{ player.tag }}">
+                    <button type="submit" name="view_player" class="view-button">View Clan</button>
+                </form>  
+            </div>
+        </div>
+
+        <!-- Builder Base Basics Section (No Image) -->
+        <div style="width: 50%; margin: 0 auto; text-align: left; line-height: 1.6; background-color: #e28743; padding: 20px; border-radius: 8px;">
+            <h2 style="text-align: center; margin-bottom: 20px;">Labels</h2>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap;">
+                {% for label in player.labels %}
+                    <div style="text-align: center;">
+                        <img src="{{ label.iconUrls.small }}" alt="{{ label.name }} Icon" style="max-width: 50px; height: auto; border-radius: 8px; display: block; margin: 0 auto;">
+                        <p style="font-weight: bold; margin-top: 10px;">{{ label.name }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: center; margin-top: 20px;">
+        <!-- Builder Base Basics Section (No Image) - Centered and Same Size -->
+        <div style="width: 90%; text-align: left; line-height: 1.6; background-color: #e28743; padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="width: 60%;">
+                <h2 style=" margin-bottom: 20px;">Heroes</h2>
+
+                <table id="sortableTable" class="sortable-table">
+                    <thead>
+                        <tr>
+                            <th>Icon</th>
+                            <th>Name</th>
+                            <th>Village</th>
+                            <th>Level</th>
+                            <th>Last TH/BH Max Level</th>
+                            <th>Current TH/BH Max Level</th>
+                            <th>Equipment 1</th>
+                            <th>Equipment 2</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hero in player.heroes %}
+                        <tr>
+                            <td>
+                                <img src="{% static 'images/Avatar_Hero_'|add:hero.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 150px;">
+                            </td>                              
+                            <td>{{hero.name}}</td>
+                            {% if hero.village == "home" %}
+                                <td>Home Village</td>
+                            {% elif hero.village == "builderBase" %}
+                                <td>Builder Base</td>
+                            {% endif %}
+                            <td>{{hero.level}}</td>
+                            {% if hero.name == "Battle Machine" or hero.name == "Battle Copter" %}
+                                <td>{{ hero.name| get_max_level_previous_TH:player.builderHallLevel }}</td>
+                                <td>{{ hero.name| get_max_level_current_TH:player.builderHallLevel }}</td>
+                            {% else %}
+                                <td>{{ hero.name| get_max_level_previous_TH:player.townHallLevel }}</td>
+                                <td>{{ hero.name| get_max_level_current_TH:player.townHallLevel }}</td>
+                            {% endif %}
+                                {% for item in hero.equipment %}
+                                <td>{{ item.name }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div style="display: flex; justify-content: center; margin-top: 20px;">
+        <!-- Builder Base Basics Section (No Image) - Centered and Same Size -->
+        <div style="width: 90%; text-align: left; line-height: 1.6; background-color: #e28743; padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="width: 60%;">
+                <h2 style=" margin-bottom: 20px;">Equipment</h2>
+
+                <table id="sortableTable" class="sortable-table">
+                    <thead>
+                        <tr>
+                            <th>Icon</th>
+                            <th>Name</th>
+                            <th>Hero</th>
+                            <th>Level</th>
+                            <th>In Use</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for equipment in player.heroEquipment %}
+                        <tr>
+                            <td>
+                                <img src="{% static 'images/'|add:equipment.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 150px;">
+                            </td>                              
+                            <td>{{equipment.name}}</td>
+                            <td>{{ equipment.name| equipment_to_hero }}</td>
+                            <td>{{equipment.level}}</td>
+                            <td>{{equipment.name|check_in_use:player}}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: center; margin-top: 20px;">
+        <div style="width: 90%; text-align: left; line-height: 1.6; background-color: #e28743; padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="width: 60%;">
+                <h2 style=" margin-bottom: 20px;">Other Units</h2>
+                
+                <h4>Troops (Home Village)</h4>
+                {% for troop in player.troops|filter_until_lassi %}
+                    {% if troop.village == "home" and troop.name|does_not_start_with:"Super" and troop.name|not_in:"Sneaky Goblin,Rocket Balloon,Inferno Dragon,Ice Hound" and troop.name|not_in:"Wall Wrecker,Battle Blimp,Stone Slammer,Siege Barracks,Battle Drill,Flame Flinger,Log Launcher" %}
+                    <div style="position: relative; display: inline-block;">
+                        <img src="{% static 'images/Avatar_'|add:troop.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ troop.name }}">
+                        <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
+                            {{ troop.level }}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                <h4>Troops (Builder Base)</h4>
+                {% for troop in player.troops %}
+                    {% if troop.village == "builderBase" %}
+                    <div style="position: relative; display: inline-block;">
+                        <img src="{% static 'images/Avatar_'|add:troop.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ troop.name }}">
+                        <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
+                            {{ troop.level }}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                <h4>Spells</h4>
+                {% for spell in player.spells %}
+                    <div style="position: relative; display: inline-block;">
+                        <img src="{% static 'images/'|add:spell.name|replace_space_with_underscore|add:'_info.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ spell.name }}">
+                        <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
+                            {{ spell.level }}
+                        </div>
+                    </div>
+                {% endfor %}
+                <h4>Siege Machines</h4>
+                {% for troop in player.troops %}
+                    {% if troop.name|is_in_list:"Wall Wrecker,Battle Blimp,Stone Slammer,Siege Barracks,Battle Drill,Flame Flinger,Log Launcher" %}
+                    <div style="position: relative; display: inline-block;">
+                        <img src="{% static 'images/Avatar_'|add:troop.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ troop.name }}">
+                        <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
+                            {{ troop.level }}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                <h4>Pets</h4>
+                {% for troop in player.troops|filter_from_lassi %}
+                {% if troop.village == "home" and troop.name|does_not_start_with:"Super" and troop.name|not_in:"Sneaky Goblin,Rocket Balloon,Inferno Dragon,Ice Hound" and troop.name|not_in:"Wall Wrecker,Battle Blimp,Stone Slammer,Siege Barracks,Battle Drill,Flame Flinger,Log Launcher" %}
+                    <div style="position: relative; display: inline-block;">
+                        <img src="{% static 'images/Avatar_'|add:troop.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ troop.name }}">
+                        <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
+                            {{ troop.level }}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+
+    <style>
+        h4 {
+        font-weight: normal;
+        }
+        .clan-info h3, .clan-info h5, .clan-info p {
+            margin: 0;
+            padding: 0;
+        }
+        .clan-info {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 150%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+
+        th {
+            cursor: pointer;
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+
+        th:hover {
+            background-color: #ddd;
+        }
+
+        .sort-arrow {
+            margin-left: 8px;
+            font-size: 1em;
+        }
+
+        /* Hover effect on rows */
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Center table headers and content */
+        table {
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        /* Center the buttons and add margin between buttons and table */
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .nav-button {
+            padding: 10px 20px;
+            background-color: #007bff; /* Blue button */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-button:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+
+        .back-button {
+            position: absolute;
+            top: 10px;
+            left: 180px; /* Offset to the right of the sidebar */
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10; /* Ensure it is above other content */
+            transition: background-color 0.3s ease;
+        }
+        
+    </style>
+    
+    {% endblock %}
+</div>

@@ -2,11 +2,27 @@
 
 {% block content %}
 <div id="content" class="clan-search-container">
-    <h1>Clan Search</h1>
+    <h1>Clan/Player Search</h1>
+
+    <!-- Add selection for Clan or Player Search -->
     <form method="post" action="{% url 'clan_search' %}" class="search-form">
         {% csrf_token %}
-        <label for="clan_tag">Clan Tag (entering the hashtag is optional, case-insensitive):</label>
+        
+        <!-- Radio buttons for choosing search type -->
+        <label>Select Search Type:</label>
+        <div class="radio-group">
+            <input type="radio" id="clan_search" name="search_type" value="clan" 
+                   {% if not player_data %}checked{% endif %}>
+            <label for="clan_search">Clan Search</label>
+        
+            <input type="radio" id="player_search" name="search_type" value="player" 
+                   {% if player_data %}checked{% endif %}>
+            <label for="player_search">Player Search</label>
+        </div>
+        
+        <label for="clan_tag">Tag (entering the hashtag is optional, case-insensitive):</label>
         <input type="text" id="clan_tag" name="clan_tag" required>
+        
         <button type="submit">Search</button>
     </form>
 
@@ -49,11 +65,43 @@
                 </form>
             {% endif %}
         </div>
+    {% elif player_data and player_data != "error" %}
+        <div class="clan-details">
+            <h2>Player Information</h2>
+            <p><strong>Name:</strong> {{ player_data.name }}</p>
+            <p><strong>Clan Tag:</strong> {{ player_data.tag }}</p>
+            <p><strong>Town Hall:</strong> {{player_data.townHallLevel}}</p>
+            <p><strong>Trophies:</strong> {{ player_data.trophies }}</p>
+            <p><strong>Clan:</strong> {{ player_data.clan.name }}</p>
+        <form method="post" action="{% url 'view_player' player_data.tag %}" class="button-form">
+            {% csrf_token %}
+            <input type="hidden" name="clan_tag" value="{{ player_data.tag  }}">
+            <button type="submit" name="view_player" class="view-button">View Player</button>
+        </form>
+
+        {% if saved %}
+            <form method="post" action="{% url 'toggle_save_player' player_data.tag  %}" class="button-form">
+                {% csrf_token %}
+                <input type="hidden" name="clan_tag" value="{{ player_data.tag  }}">
+                <button type="submit" name="remove_clan" class="remove-button">Remove Player</button>
+            </form>
+        {% else %}
+            <form method="post" action="{% url 'toggle_save_player' player_data.tag  %}" class="button-form">
+                {% csrf_token %}
+                <input type="hidden" name="clan_tag" value="{{ player_data.tag  }}">
+                <button type="submit" name="save_clan" class="save-button">Save Player</button>
+            </form>
+        {% endif %}
+    </div>
     {% endif %}
 
-    {% if error %}
+    {% if error == "clan" %}
         <div class="alert alert-danger mt-3">
             <strong>Invalid Clan Tag</strong>
+        </div>
+    {% elif error == "player" %}
+        <div class="alert alert-danger mt-3">
+            <strong>Invalid Player Tag</strong>
         </div>
     {% endif %}
 </div>
@@ -79,13 +127,41 @@
         font-weight: bold;
     }
 
-    .search-form input {
+    .search-form input[type="text"] {
         width: 100%;
         padding: 8px;
         font-size: 16px;
         border: 1px solid #ccc;
         border-radius: 4px;
         margin-bottom: 12px;
+    }
+
+    .radio-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .radio-group input[type="radio"] {
+        display: none;
+    }
+
+    .radio-group label {
+        padding: 10px 15px;
+        font-size: 16px;
+        color: #fff;
+        background-color: #007BFF;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .radio-group input[type="radio"]:checked + label {
+        background-color: #0056b3;
+    }
+
+    .radio-group label:hover {
+        background-color: #0056b3;
     }
 
     .search-form button {

@@ -18,8 +18,8 @@ def get_clan_badge(clan_tag):
     response_json = response.json()
     return response_json["badgeUrls"]["medium"]
 
-def clean_tag(clan_tag):
-    return clan_tag.replace("#", "").replace(" ", "").upper()
+def clean_tag(tag):
+    return tag.replace("#", "").strip().upper()
 
 def get_member_data(clan_tag):
     response = requests.get(f"https://api.clashofclans.com/v1/clans/%23{clan_tag}/members", headers=headers)
@@ -30,3 +30,9 @@ def get_all_clan_data(clan_tag):
     response = requests.get(f"https://api.clashofclans.com/v1/clans/%23{clan_tag}", headers=headers)
     response_json = response.json()
     return response_json
+
+def get_all_player_data(player_tag):
+    response = requests.get(f"https://api.clashofclans.com/v1/players/%23{player_tag}", headers=headers)
+    response_json = response.json()
+    return response_json
+

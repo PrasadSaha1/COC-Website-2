@@ -71,7 +71,8 @@
     
 
     <h1 style="text-align: center; margin-top: 30px;">Clan Members</h1>
-    
+    <h4 style="text-align: center; margin-top: 30px;">Click on a Player's name to view their profile and upgrade history</h4>
+
     <div class="button-container">
         <form method="post" action="{% url 'view_clan' clan_tag 'general' %}">
             {% csrf_token %}
@@ -125,7 +126,7 @@
             {% for member in member_data.items %}
             <tr>
                 {% if mode == "general" %}
-                    <td>{{ member.name }}</td>
+                    <td><a href="{% url 'view_player' member.tag %}" style="color: inherit; text-decoration: none;">{{ member.name }}</a></td>
                     <td>{{ member.tag }}</td>
                     <td>
                         {% if member.role == "leader" %} Leader
@@ -140,17 +141,17 @@
                     <td>    
                         <img src="{{ member.league.iconUrls.tiny }}" alt="{{ clan_name }} Badge" style="max-width: 200px; height: auto; border-radius: 8px; display: block; margin: 0 auto;">                    
                     </td>
-                    <td>{{ member.name }}</td>
+                    <td><a href="{% url 'view_player' member.tag %}" style="color: inherit; text-decoration: none;">{{ member.name }}</a></td>
                     <td>{{ member.townHallLevel }}</td>
                     <td>{{ member.trophies }}</td>
                 {% elif mode == "builder_base" %}
-                    <td>{{ member.name }}</td>
-                    <td>{{ member.builderBaseTrophies }}</td>
+                    <td><a href="{% url 'view_player' member.tag %}" style="color: inherit; text-decoration: none;">{{ member.name }}</a></td>
+                <td>{{ member.builderBaseTrophies }}</td>
                 {% elif mode == "all" %}
                     <td>    
                         <img src="{{ member.league.iconUrls.tiny }}" alt="{{ clan_name }} Badge" style="max-width: 200px; height: auto; border-radius: 8px; display: block; margin: 0 auto;">                    
                     </td>
-                    <td>{{ member.name }}</td>
+                    <td><a href="{% url 'view_player' member.tag %}" style="color: inherit; text-decoration: none;">{{ member.name }}</a></td>
                     <td>{{ member.tag }}</td>
                     <td>
                         {% if member.role == "leader" %} Leader
