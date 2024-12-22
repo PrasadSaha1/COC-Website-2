@@ -41,9 +41,15 @@ INSTALLED_APPS = [
     'register',
     'crispy_forms',
     "crispy_bootstrap5",
+    "celery",
+    "django_celery_beat",
 ]
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
-
+# set the celery broker url
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379'
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379'
+# set the celery timezone
+CELERY_TIMEZONE = 'America/New_York'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

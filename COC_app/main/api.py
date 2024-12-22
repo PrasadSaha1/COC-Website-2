@@ -35,4 +35,3 @@ def get_all_player_data(player_tag):
     response = requests.get(f"https://api.clashofclans.com/v1/players/%23{player_tag}", headers=headers)
     response_json = response.json()
     return response_json
-

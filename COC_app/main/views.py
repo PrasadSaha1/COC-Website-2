@@ -6,14 +6,14 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 
 from main.api import find_clan_with_tag, get_clan_badge, clean_tag, get_member_data, get_all_clan_data, get_all_player_data
-from .models import SavedClan, SavedPlayer
+from .models import SavedClan, SavedPlayer, GlobalPlayer, PlayerMonthlyData
+
 
 @login_required(login_url='/register/')
 def home(response):
     return render(response, "main/home.html", {})
 
-
-@login_required(login_url='/register/')
+@login_required
 def settings(response):
     return render(response, "main/settings.html", {})
 
@@ -21,7 +21,6 @@ def settings(response):
 @login_required(login_url='/register/')
 def logout_view(request):
     logout(request)
-
     return redirect("register:create_account")
 
 
@@ -146,7 +145,7 @@ def toggle_save_clan(request, clan_tag):
 def toggle_save_player(request, player_tag):
     saved_player = SavedPlayer.objects.filter(user=request.user, player_tag=clean_tag(player_tag)).first()
     player_name = get_all_player_data(clean_tag(player_tag))["name"]
-    print(player_name)
+    #print(player_name)
     saved_player_count = SavedPlayer.objects.filter(user=request.user).count()
     change = None
 
@@ -203,7 +202,6 @@ def view_clan(request, clan_tag, mode):
 @login_required(login_url='/register/')
 def my_players(request):
     players_data = []
-
     for player in SavedPlayer.objects.filter(user=request.user):
         data = get_all_player_data(clean_tag(player.player_tag))
         players_data.append(data)
@@ -213,4 +211,20 @@ def my_players(request):
 @login_required(login_url='/register/')
 def view_player(request, player_tag):
     player = get_all_player_data(clean_tag(player_tag))
-    return render(request, "main/view_player.html", {"player": player})
+    is_being_tracked = GlobalPlayer.objects.filter(player_tag=clean_tag(player_tag)).exists()
+    if request.method == "POST" and not is_being_tracked:
+        new_player = GlobalPlayer(player_tag=clean_tag(player_tag))
+        new_player.save() 
+    return render(request, "main/view_player.html", {"player": player, "is_being_tracked": is_being_tracked})
+
+
+@login_required(login_url='/register/')
+def view_player_history(request, player_tag):
+    player = get_all_player_data(clean_tag(player_tag))
+    player_history = GlobalPlayer.objects.get(player_tag=clean_tag(player_tag))
+    monthly_data = player_history.monthly_data.all()  # Reverse lookup using `related_name`
+    if not monthly_data.exists():
+        monthly_data = "N/A"
+
+    return render(request, "main/view_player_history.html", {"player": player, "monthly_data": monthly_data})
+

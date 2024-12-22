@@ -15,4 +15,5 @@ urlpatterns = [
     path("my_players", views.my_players, name="my_players"),
     path("toggle_save_player/<player_tag>/", views.toggle_save_player, name="toggle_save_player"),
     path("view_player/<player_tag>", views.view_player, name="view_player"),
+    path("view_player_history/<player_tag>", views.view_player_history, name="view_player_history"),
 ]
