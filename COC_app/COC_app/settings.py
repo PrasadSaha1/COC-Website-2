@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -43,6 +42,7 @@ INSTALLED_APPS = [
     "crispy_bootstrap5",
     "celery",
     "django_celery_beat",
+    'django.contrib.humanize',  # Add this line if you need humanized formatting
 ]
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
 # set the celery broker url
@@ -117,7 +117,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/New_York'  # Or your relevant timezone
+USE_TZ = True
 
 USE_I18N = True
 

@@ -7,13 +7,14 @@
     <h1 class="centered-heading">History for {{ player.name }}</h1>
 
     {% if monthly_data == "N/A" %}
-        <h3 class="center-text">There is no history available for this player. Check back at the start of the next month.</h3>
+        <h3 class="center-text">There is no history available for this player. Check back at the start of the next trophy season (last Monday of the Month)</h3>
     {% else %}
     <div class="clan-grid">
+        <h3 class="center-text">Records are stored on the last Sunday of each month, just before the end of the trophy season</h3>
         {% for record in monthly_data %}
         <div class="clan-container">
-            <h1>{{record.month}} {{record.year}}</h1>
-            <p><strong>Time:</strong> {{ record.hour }}:{{ record.minute }}:{{ record.second }}</p>
+            <h1>{% format_date record.month record.day record.year %}</h1>  <!-- Use the custom tag here -->
+            <h3 class="center-text"><strong>Time Recorded:</strong> {% format_time record.hour record.minute %}EST</h3>
             <p><strong>Town Hall:</strong> {{ record.town_hall_level }}</p>
             <p><strong>Builder Hall:</strong> {{ record.builder_hall_level }}</p>
 
@@ -24,6 +25,12 @@
 
             <p><strong>Clan:</strong> {{ record.clan_name }}</p>
             <p><strong>Clan Tag:</strong> {{ record.clan_tag }}</p>
+
+            <p><strong>Donations:</strong> {{ record.donations_given }}</p>
+            <p><strong>Donations Recieved:</strong> {{ record.donations_recieved }}</p>
+            <p><strong>Clan Capital Contributions:</strong> {{ record.clan_capital_contributions }}</p>
+            <p><strong>Attack Wins:</strong> {{ record.attack_wins }}</p>
+            <p><strong>Defense Wins:</strong> {{ record.defense_wins }}</p>
 
             <div style="width: 60%;">
                 <h2 style=" margin-bottom: 20px;">Heroes</h2>

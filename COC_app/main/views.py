@@ -6,8 +6,8 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 
 from main.api import find_clan_with_tag, get_clan_badge, clean_tag, get_member_data, get_all_clan_data, get_all_player_data
-from .models import SavedClan, SavedPlayer, GlobalPlayer, PlayerMonthlyData
-
+from .models import SavedClan, SavedPlayer, GlobalPlayer, GlobalClan
+from main.api import *
 
 @login_required(login_url='/register/')
 def home(response):
@@ -15,6 +15,8 @@ def home(response):
 
 @login_required
 def settings(response):
+    fetch_war_info("2YPVR8LVR")
+    get_monthly_clan_war_info()
     return render(response, "main/settings.html", {})
 
 
@@ -196,8 +198,20 @@ def my_clans(request):
 def view_clan(request, clan_tag, mode):
     member_data = get_member_data(clean_tag(clan_tag))
     clan_data = get_all_clan_data(clean_tag(clan_tag))
+    is_being_tracked = GlobalClan.objects.filter(clan_tag=clean_tag(clan_tag)).exists()
 
-    return render(request, "main/view_clan.html", {"member_data": member_data, "clan_tag": clan_tag, "mode": mode, "clan_data": clan_data,})
+    if request.method == "POST" and not is_being_tracked:
+        if 'track_clan_history' in request.POST:
+            new_clan = GlobalClan(clan_tag=clean_tag(clan_tag))
+            new_clan.save() 
+            is_being_tracked = True
+            for player in member_data["items"]:
+                tag = player["tag"]
+                player_is_being_tracked = GlobalPlayer.objects.filter(player_tag=clean_tag(tag)).exists()
+                if not player_is_being_tracked:
+                    new_player = GlobalPlayer(player_tag=clean_tag(tag))
+                    new_player.save() 
+    return render(request, "main/view_clan.html", {"member_data": member_data, "clan_tag": clan_tag, "mode": mode, "clan_data": clan_data, "is_being_tracked": is_being_tracked})
 
 @login_required(login_url='/register/')
 def my_players(request):
@@ -215,6 +229,7 @@ def view_player(request, player_tag):
     if request.method == "POST" and not is_being_tracked:
         new_player = GlobalPlayer(player_tag=clean_tag(player_tag))
         new_player.save() 
+        is_being_tracked = True
     return render(request, "main/view_player.html", {"player": player, "is_being_tracked": is_being_tracked})
 
 
@@ -222,9 +237,53 @@ def view_player(request, player_tag):
 def view_player_history(request, player_tag):
     player = get_all_player_data(clean_tag(player_tag))
     player_history = GlobalPlayer.objects.get(player_tag=clean_tag(player_tag))
-    monthly_data = player_history.monthly_data.all()  # Reverse lookup using `related_name`
-    if not monthly_data.exists():
+    monthly_data = player_history.monthly_data.all()[::-1]
+    if len(monthly_data) == 0:
         monthly_data = "N/A"
 
     return render(request, "main/view_player_history.html", {"player": player, "monthly_data": monthly_data})
+
+@login_required(login_url='/register/')
+def view_clan_general_history(request, clan_tag):
+    clan = get_all_clan_data(clean_tag(clan_tag))
+    clan_general_history = GlobalClan.objects.get(clan_tag=clean_tag(clan_tag))
+    monthly_data_general = clan_general_history.monthly_data_general.all()[::-1]
+    if len(monthly_data_general) == 0:
+        monthly_data_general = "N/A"
+
+    return render(request, "main/view_clan_general_history.html", {"clan": clan, "monthly_data_general": monthly_data_general})
+
+
+@login_required(login_url='/register/')
+def view_clan_war_history(request, clan_tag):
+    clan = get_all_clan_data(clean_tag(clan_tag))
+    clan_war_history = GlobalClan.objects.get(clan_tag=clean_tag(clan_tag))
+    monthly_data_war = clan_war_history.monthly_data_war.all()[::-1]
+    each_war_data = clan_war_history.war_information.all()[::-1]
+    if len(each_war_data) == 0:
+        each_war_data = "N/A"
+    
+    # Get the submitted values or use defaults
+    type_of_war = request.POST.get('type_of_war', 'regular')  # Default value if none selected
+    type_of_data = request.POST.get('type_of_data', 'summary')
+    include_member_data = request.POST.get('include_member_data', 'yes')
+
+    summary_member_data = []
+    members = clan["memberList"]
+    for member in members:
+        player_tag = clean_tag(member["tag"])
+        player, created = GlobalPlayer.objects.get_or_create(player_tag=player_tag)
+        for month in player.monthly_data_war.all():
+            summary_member_data.append(month)
+
+
+    return render(request, "main/view_clan_war_history.html", {
+        "clan": clan,
+        "monthly_data_war": monthly_data_war,
+        "each_war_data": each_war_data,
+        "type_of_war": type_of_war,
+        "type_of_data": type_of_data,
+        "include_member_data": include_member_data,
+        "summary_member_data": summary_member_data,
+    })
 

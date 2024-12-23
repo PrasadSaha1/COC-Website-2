@@ -11,6 +11,32 @@
         <h5 style="margin: 5px 0; color: #888;">{{clan_data.description}}</h5>
     </div>
 
+    {% if not is_being_tracked %}
+        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
+            <form method="post" action="{% url 'view_clan' clan_tag mode %}" class="button-form">
+                {% csrf_token %}
+                <input type="hidden" name="clan_tag" value="{{ clan.tag }}">
+                <button type="submit" name="track_clan_history" class="view-button">Start Tracking Clans's History</button>
+            </form>
+        </div>
+    {% else %}
+        <h4>This Clans's history is currently being tracked</h4>
+        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
+            <form method="post" action="{% url 'view_clan_war_history' clan_tag %}" class="button-form">
+                {% csrf_token %}
+                <input type="hidden" name="clan_tag" value="{{ clan.tag }}">
+                <button type="submit" name="view_clan_war_history" class="view-button">View Clan War History</button>
+            </form>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
+            <form method="post" action="{% url 'view_clan_general_history' clan_tag %}" class="button-form">
+                {% csrf_token %}
+                <input type="hidden" name="clan_tag" value="{{ clan.tag }}">
+                <button type="submit" name="view_clan_history" class="view-button">View Clan General History</button>
+            </form>
+        </div>
+    {% endif %}
+
     <h2 style="text-align: center; margin-top: 20px;">Clan Information</h2>
 
     <!-- Flexbox container to place information side by side -->
@@ -415,6 +441,9 @@
             margin-bottom: 10px;
             font-family: Arial, sans-serif;
             color: #333;
+        }
+        h4{
+            text-align: center;
         }
 
         /* Center the buttons and add margin between buttons and table */
