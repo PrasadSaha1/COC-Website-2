@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from main.api import find_clan_with_tag, get_clan_badge, clean_tag, get_member_data, get_all_clan_data, get_all_player_data
 from .models import SavedClan, SavedPlayer, GlobalPlayer, GlobalClan
 from main.api import *
+from datetime import datetime, timedelta
 
 @login_required(login_url='/register/')
 def home(response):
@@ -15,10 +16,19 @@ def home(response):
 
 @login_required
 def settings(response):
-    fetch_war_info("2YPVR8LVR")
-    get_monthly_clan_war_info()
+    get_monthly_clan_general_info()
     return render(response, "main/settings.html", {})
 
+def get_monthly_clan_general_info():
+    clans = GlobalClan.objects.all()
+    for clan in clans:
+        data = get_all_clan_data(clean_tag(str(clan)))
+        day_fetched = datetime.now() 
+        if day_fetched.day <= 7:
+            month_year = (day_fetched.replace(day=1) - timedelta(days=1)).replace(day=1)
+        else:
+            month_year = day_fetched.replace(day=1)
+        ClanMonthlyDataGeneral.objects.create(clan=clan, data=data, day_fetched=day_fetched, month_year=month_year)
 
 @login_required(login_url='/register/')
 def logout_view(request):
@@ -251,7 +261,23 @@ def view_clan_general_history(request, clan_tag):
     if len(monthly_data_general) == 0:
         monthly_data_general = "N/A"
 
-    return render(request, "main/view_clan_general_history.html", {"clan": clan, "monthly_data_general": monthly_data_general})
+    type_of_data = request.POST.get('type_of_data', 'in-depth')
+    type_of_member_data = request.POST.get('type_of_member_data', 'general')
+
+    summary_member_data = []
+    members = clan["memberList"]
+    for member in members:
+        player_tag = clean_tag(member["tag"])
+        player, created = GlobalPlayer.objects.get_or_create(player_tag=player_tag)
+        for month in player.monthly_data.all():
+            summary_member_data.append(month)
+    
+    for data in summary_member_data:
+        pass
+
+    return render(request, "main/view_clan_general_history.html", 
+                  {"clan": clan, "monthly_data_general": monthly_data_general, "summary_member_data": summary_member_data,
+                   "type_of_data": type_of_data, "type_of_member_data": type_of_member_data})
 
 
 @login_required(login_url='/register/')

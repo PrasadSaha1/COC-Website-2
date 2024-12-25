@@ -13,21 +13,36 @@ app = Celery('COC_app')
 # Configure Celery using settings from Django settings.py.
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
+"""
 app.conf.beat_schedule = {
     'fetch-clan-war-status': {
         'task': 'main.tasks.get_clan_war_status',  # Update to the correct task path
         'schedule': timedelta(hours=46),  # Runs every 46 hours
     },
-}
+    'end-of-trophy-season-updates': {
+        'task': 'main.tasks.end_of_trophy_season_updates',
+        'schedule': crontab(minute=0, hour=2, day_of_week='sun', day_of_month='last'),
+    },
+    'get-monthly-clan-war-info': {
+        'task': 'main.tasks.get_monthly_clan_war_info',
+        'schedule': crontab(minute=0, hour=2, day_of_month=3),
+    },
+"""
 
 app.conf.beat_schedule = {
-    'update-monthly-clan-war-information': {
-        'task': 'main.tasks.update_player_history',  # Update to your correct task path
-        'schedule': crontab(minute=15, hour=13, day_of_month=23),  # Runs at midnight (00:00) on the 3rd of each month
+    'fetch-clan-war-status': {
+        'task': 'main.tasks.get_clan_war_status',  # Update to the correct task path
+        'schedule': crontab(minute=54, hour=9, day_of_month=25),
+    },
+    'end-of-trophy-season-updates': {
+        'task': 'main.tasks.end_of_trophy_season_updates',
+        'schedule': crontab(minute=56, hour=21, day_of_month=24),
+    },
+    'get-monthly-clan-war-info': {
+        'task': 'main.tasks.get_monthly_clan_war_info',
+        'schedule': crontab(minute=0, hour=22, day_of_month=24),
     },
 }
-
-
 # Optional: to use timezone-aware scheduling
 app.conf.timezone = 'America/New_York'  # Set to the timezone you want (EST for Eastern Standard Time)
 

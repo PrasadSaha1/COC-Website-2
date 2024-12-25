@@ -1,4 +1,5 @@
 {% extends 'main/base.html' %}
+{% load custom_filters %}
 
 {% block content %}
 <div id="content">
@@ -23,13 +24,7 @@
                 <p><strong>Clan Name:</strong> {{ clan.name }}</p>
                 <p><strong>Clan Tag:</strong> {{ clan.tag }}</p>
                 
-                {% if clan.type == "open" %}
-                    <p><strong>Clan Type:</strong> Open</p>
-                {% elif clan.type == "closed" %}
-                    <p><strong>Clan Type:</strong> Closed</p>
-                {% else %}
-                    <p><strong>Clan Type:</strong> Invite Only</p>
-                {% endif %}
+                <p><strong>Clan Type:</strong> {% clan_type_display clan.type %}</p>
                 
                 <p><strong>Description:</strong> {{ clan.description }}</p>
                 <p><strong>Members:</strong> {{ clan.members }}</p>

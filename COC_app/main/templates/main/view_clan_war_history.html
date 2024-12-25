@@ -66,7 +66,7 @@
                     ">
 
                     <h2>Preparation Day started at {{ record.war_info.preparationStartTime|convert_to_est }}</h2>
-
+                    <h2>{{record.current_time}}</h2>
                     {% if record.war_info.clan.stars > record.war_info.opponent.stars %}
                         <h1 class="result-heading">Win</h1>
                     {% elif record.war_info.clan.stars < record.war_info.opponent.stars %}
@@ -104,14 +104,14 @@
                         <table id="sortableTable" class="sortable-table">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Tag</th>
-                                    <th>Roster Number</th>
-                                    <th>Number of Attacks</th>
-                                    <th>Attack 1 Stars</th>
-                                    <th>Attack 1 Destruction</th>
-                                    <th>Attack 2 Stars</th>
-                                    <th>Attack 2 Destruction</th>
+                                    <th onclick="sortTable('string', 0)">Name <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('string', 1)">Tag <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 2)">Roster Number <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 3)">Number of Attacks <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 4)">Attack 1 Stars <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 5)">Attack 1 Destruction <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 6)">Attack 2 Stars <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 7)">Attack 2 Destruction <span class="sort-arrow"></span></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -121,10 +121,10 @@
                                     <td>{{member.tag}}</td>
                                     <td>{{member.mapPosition}}</td>
                                     <td>{{member.attacks|length}}</td>
-                                    <td>{{member.attacks.0.stars}}</td>
-                                    <td>{{member.attacks.0.destructionPercentage}}</td>
-                                    <td>{{member.attacks.1.stars}}</td>
-                                    <td>{{member.attacks.1.destructionPercentage}}</td>
+                                    <td>{{ member.attacks.0.stars|default:0 }}</td>
+                                    <td>{{ member.attacks.0.destructionPercentage|default:0 }}</td>
+                                    <td>{{ member.attacks.1.stars|default:0 }}</td>
+                                    <td>{{ member.attacks.1.destructionPercentage|default:0 }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -150,13 +150,13 @@
                     <table id="sortableTable" class="sortable-table">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Tag</th>
-                                <th>Number of Wars</th>
-                                <th>Number of Attacks</th>
-                                <th>Number of Missed Attacks</th>
-                                <th>Average Stars per War</th>
-                                <th>Average Destruction per war</th>
+                                <th onclick="sortTable('string', 0)">Name <span class="sort-arrow"></span></th>
+                                <th onclick="sortTable('string', 1)">Tag <span class="sort-arrow"></span></th>
+                                <th onclick="sortTable('int', 2)">Number of Wars <span class="sort-arrow"></span></th>
+                                <th onclick="sortTable('int', 3)">Number of Attacks <span class="sort-arrow"></span></th>
+                                <th onclick="sortTable('int', 4)">Number of Missed Attacks <span class="sort-arrow"></span></th>
+                                <th onclick="sortTable('int', 5)">Average Stars per War <span class="sort-arrow"></span></th>
+                                <th onclick="sortTable('int', 6)">Average Destruction per War <span class="sort-arrow"></span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -182,7 +182,6 @@
     </div>
     {% endif %}
 </div>
-
 
 {% block extra_styles %}
 <style>
@@ -473,5 +472,130 @@
 
         
 </style>
+
+<script>
+    let currentSortColumn = 2; // Default column is Roster Number (index 2)
+    let sortDirection = 'asc'; // Default sort direction is descending (highest first)
+    
+    // Function to sort the table
+    function sortTable(sortingType, row) {
+        const table = document.getElementById("sortableTable");
+        let rows, switching, i, x, y, shouldSwitch;
+
+        switching = true;
+        let dir = sortDirection; // Use current sort direction
+ 
+        if (row === currentSortColumn) {
+            if (dir === 'desc') {
+                dir = 'asc'; // Change to ascending
+            } else if (dir === 'asc') {
+                dir = 'default'; // Change to default
+            } else {
+                dir = 'desc'; // Change back to descending
+            }
+        } else {
+            dir = 'desc'; // Reset direction to descending for a new column
+        }
+
+        sortDirection = dir;
+        currentSortColumn = row; // Update the current column index
+
+        // Reset arrows before sorting
+        resetArrows();
+
+        // Add the current sorting direction arrow to the header
+        addArrow(row, dir);
+
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+
+            // Loop through all table rows (except the first row with headers)
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[row];
+                y = rows[i + 1].getElementsByTagName("TD")[row];
+
+                if (sortingType === "string") { // For other columns, use the default string-based comparison
+                    if (dir === "asc") {
+                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir === "desc") {
+                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                } else if (sortingType === "int") { // Integer comparison
+                    let xInt = parseInt(x.innerHTML.trim(), 10);
+                    let yInt = parseInt(y.innerHTML.trim(), 10);
+
+                    if (dir === "asc") {
+                        if (xInt > yInt) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir === "desc") {
+                        if (xInt < yInt) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+            }
+        }
+
+        // Reset table to default (sorted by Trophies in descending order)
+        if (dir === 'default') {
+            resetTableToDefault();
+        }
+    }
+
+    // Reset the table to default sorting (by Trophies in descending order)
+    function resetTableToDefault() {
+        var defaultRow = 2;
+        const table = document.getElementById("sortableTable");
+        let rows = table.rows;
+
+        // Sort the table
+        let sortedRows = Array.from(rows).slice(1).sort((a, b) => {
+            let x = parseInt(a.cells[defaultRow].innerText, 10); 
+            let y = parseInt(b.cells[defaultRow].innerText, 10);
+            console.log(x, y);
+            return x - y; // Descending order
+        });
+        sortedRows.forEach(row => table.appendChild(row));
+    }
+
+    // Reset arrows
+    function resetArrows() {
+        const arrows = document.querySelectorAll('.sort-arrow');
+        arrows.forEach(arrow => {
+            arrow.innerHTML = ''; // Remove any arrows
+        });
+    }
+
+    // Add the sorting arrow
+    function addArrow(n, dir) {
+        const header = document.querySelectorAll('th')[n];
+        const arrow = header.querySelector('.sort-arrow');
+        if (dir === 'asc') {
+            arrow.innerHTML = '▲'; // Ascending arrow
+        } else if (dir === 'desc') {
+            arrow.innerHTML = '▼'; // Descending arrow
+        }
+    }
+
+    // Initialize the table to be sorted by Trophies in descending order on page load
+    window.onload = resetTableToDefault;
+</script>
+
 {% endblock %}
 {% endblock %}

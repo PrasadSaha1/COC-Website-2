@@ -1,7 +1,7 @@
 # myapp/templatetags/custom_filters.py
 from django import template
 import pytz
-from datetime import datetime
+from datetime import datetime, date
 
 register = template.Library()
 
@@ -198,3 +198,52 @@ def first_element(value):
     if isinstance(value, list) and value:
         return value[0]
     return None
+
+@register.simple_tag
+def clan_type_display(clan_type):
+    if clan_type == "open":
+        return "Open"
+    elif clan_type == "closed":
+        return "Closed"
+    else:
+        return "Invite Only"
+    
+@register.simple_tag
+def war_frequency_display(war_frequency):
+    war_frequency_map = {
+        "always": "Always",
+        "never": "Never",
+        "onceAWeek": "Once a Week",
+        "twiceAWeek": "Twice a Week",
+        "unknown": "Not Set",
+        "rarely": "Rarely",
+    }
+    return war_frequency_map.get(war_frequency, f"Not found: {war_frequency}")
+
+@register.filter
+def extract_day(value):
+    if isinstance(value, (date, datetime)):
+        return value.day  # Directly return the day for date or datetime
+    try:
+        # Parse if it's a string
+        date_obj = datetime.strptime(value, "%b. %d, %Y")
+        return date_obj.day
+    except (ValueError, TypeError):
+        return None
+    
+@register.filter
+def convert_date_to_month_year(date_obj):
+    """
+    Convert a datetime.date object to "Month Year" format.
+    """
+    return date_obj.strftime("%B %Y")
+
+@register.simple_tag
+def role_display(role):
+    role_map = {
+        "leader": "Leader",
+        "coLeader": "Co-Leader",
+        "admin": "Elder",
+        "member": "Member",
+    }
+    return role_map.get(role, role) 

@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from datetime import date
+from datetime import date, time
 
 class SavedClan(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_clans')
@@ -38,40 +38,11 @@ class PlayerWarInformation(models.Model):
 
 class PlayerMonthlyData(models.Model):
     player = models.ForeignKey(GlobalPlayer, on_delete=models.CASCADE, related_name='monthly_data')
-    
-    day = models.IntegerField(default=0)
-    month = models.IntegerField(default=0)  
-    year = models.IntegerField(default=0)
-    
-    hour = models.IntegerField(default=7) 
-    minute = models.IntegerField(default=7)  
-
-    town_hall_level = models.IntegerField()
-    builder_hall_level = models.IntegerField()
-    player_name = models.CharField(max_length=50, default="N/A")
-
-    clan_name = models.CharField(max_length=20)
-    clan_tag = models.CharField(max_length=20)
-    donations_given = models.IntegerField(default=0)
-    donations_recieved = models.IntegerField(default=0)
-    clan_capital_contributions = models.IntegerField(default=0)
-
-    attack_wins = models.IntegerField(default=0)
-    defense_wins = models.IntegerField(default=0)
-
-    trophies = models.IntegerField(default=0)
-    builder_base_trophies = models.IntegerField(default=0)
-    war_stars = models.IntegerField(default=0)
-    XP_level = models.IntegerField(default=0)
-
-    hero_data = models.JSONField(default=list)
-    equipment_data = models.JSONField(default=list)
-    troop_data = models.JSONField(default=list)
-    spell_data = models.JSONField(default=list)
-
-    def __str__(self):
-        return f"{self.player.player_tag}"
-
+    data = models.JSONField(default=list)
+    month_year = models.DateField(default=date.today)
+    time_fetched = models.TimeField(default=time(9, 0))  # Default is 09:00:00
+    day_fetched = models.DateField(default=date.today)
+   
 class PlayerMonthlyDataWar(models.Model):
     """Assumes a player does not change clan"""
     player = models.ForeignKey(GlobalPlayer, on_delete=models.CASCADE, related_name='monthly_data_war')
@@ -97,10 +68,15 @@ class GlobalClan(models.Model):
 
 class ClanWarInformation(models.Model):
     clan = models.ForeignKey(GlobalClan, on_delete=models.CASCADE, related_name='war_information')
+    current_time = models.CharField(default="N/A", max_length=50)
     war_info = models.JSONField(default=list)
 
 class ClanMonthlyDataGeneral(models.Model):
     clan = models.ForeignKey(GlobalClan, on_delete=models.CASCADE, related_name='monthly_data_general')
+    data = models.JSONField(default=list)
+    month_year = models.DateField(default=date.today)
+    day_fetched = models.DateField(default=date.today)
+    time_fetched = models.TimeField(default=time(9, 0))  # Default is 09:00:00
 
 class ClanMonthlyDataWar(models.Model):
     clan = models.ForeignKey(GlobalClan, on_delete=models.CASCADE, related_name='monthly_data_war')

@@ -1,4 +1,5 @@
 {% extends 'main/base.html' %}
+{% load custom_filters %}
 
 <div id="content" style="position: relative;">
     {% block content %}
@@ -48,13 +49,7 @@
             <p><strong>Points (Builder Base):</strong> {{ clan_data.clanBuilderBasePoints }}</p>
             <p><strong>Location:</strong> {{ clan_data.location.name }}</p>
             <p><strong>Language:</strong> {{ clan_data.chatLanguage.name }}</p>
-            {% if clan.type == "open" %}
-                <p><strong>Clan Type:</strong> Open</p>
-            {% elif clan.type == "closed" %}
-                <p><strong>Clan Type:</strong> Closed</p>
-            {% else %}
-                <p><strong>Clan Type:</strong> Invite Only</p>
-            {% endif %}
+            <p><strong>Clan Type:</strong> {% clan_type_display clan.type %}</p>
             <p><strong>Required Trophies (Home Village):</strong> {{ clan_data.requiredTrophies }}</p>
             <p><strong>Required Trophies (Builder Base):</strong> {{ clan_data.requiredBuilderBaseTrophies }}</p>
             <p><strong>Required Town Hall:</strong> {{ clan_data.requiredTownhallLevel }}</p>
@@ -64,21 +59,7 @@
             <h2 style="text-align: center; margin-bottom: 20px;">War Information</h2>
             <p><strong>Wars Won:</strong> {{ clan_data.warWins }}</p>
             <p><strong>War Win Streak:</strong> {{ clan_data.warWinStreak }}</p>
-            {% if clan_data.warFrequency == "always" %}
-                <p><strong>War Frequency:</strong> Always</p>
-            {% elif clan_data.warFrequency == "never" %}
-                <p><strong>War Frequency:</strong> Never</p>
-            {% elif clan_data.warFrequency == "onceAWeek" %}
-                <p><strong>War Frequency:</strong> Once a Week</p>
-            {% elif clan_data.warFrequency == "twiceAWeek" %}
-                <p><strong>War Frequency:</strong> Twice a Week</p>
-            {% elif clan_data.warFrequency == "unknown" %}
-                <p><strong>War Frequency:</strong> Not Set</p>
-            {% elif clan_data.warFrequency == "rarely" %}
-                <p><strong>War Frequency:</strong> Rarely</p>
-            {% else %}
-                <p><strong>War Frequency:</strong>Not found: {{clan_data.warFrequency}}</p>
-            {% endif %}
+            <p><strong>War Frequency:</strong> {% war_frequency_display clan_data.warFrequency %}</p>
         </div>
     </div>
 
