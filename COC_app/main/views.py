@@ -145,7 +145,6 @@ def toggle_save_clan(request, clan_tag):
 def toggle_save_player(request, player_tag):
     saved_player = SavedPlayer.objects.filter(user=request.user, player_tag=clean_tag(player_tag)).first()
     player_name = get_all_player_data(clean_tag(player_tag))["name"]
-    #print(player_name)
     saved_player_count = SavedPlayer.objects.filter(user=request.user).count()
     change = None
 
