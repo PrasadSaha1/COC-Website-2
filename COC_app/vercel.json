@@ -1,26 +1,28 @@
 {
+    "version": 2,
     "builds": [
+      {
+        "src": "COC_app/wsgi.py",
+        "use": "@vercel/python",
+        "config": { "maxLambdaSize": "15mb", "runtime": "python3.11" }
+      },
       {
         "src": "build_files.sh",
         "use": "@vercel/static-build",
         "config": {
           "distDir": "staticfiles_build"
         }
-      },
-      {
-        "src": "/COC_app/wsgi.py",
-        "use": "@vercel/python",
-        "config": { "maxLambdaSize": "15mb" }
       }
     ],
     "routes": [
       {
-        "src": "/(.*)",
-        "dest": "COC_app/wsgi.py"
-      },
-      {
         "src": "/static/(.*)",
         "dest": "/static/$1"
+      },
+      {
+        "src": "/(.*)",
+        "dest": "COC_app/wsgi.py"
       }
     ]
   }
+  
