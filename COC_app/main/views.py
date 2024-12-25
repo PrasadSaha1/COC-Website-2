@@ -16,19 +16,7 @@ def home(response):
 
 @login_required
 def settings(response):
-    get_monthly_clan_general_info()
     return render(response, "main/settings.html", {})
-
-def get_monthly_clan_general_info():
-    clans = GlobalClan.objects.all()
-    for clan in clans:
-        data = get_all_clan_data(clean_tag(str(clan)))
-        day_fetched = datetime.now() 
-        if day_fetched.day <= 7:
-            month_year = (day_fetched.replace(day=1) - timedelta(days=1)).replace(day=1)
-        else:
-            month_year = day_fetched.replace(day=1)
-        ClanMonthlyDataGeneral.objects.create(clan=clan, data=data, day_fetched=day_fetched, month_year=month_year)
 
 @login_required(login_url='/register/')
 def logout_view(request):

@@ -66,7 +66,6 @@
                     ">
 
                     <h2>Preparation Day started at {{ record.war_info.preparationStartTime|convert_to_est }}</h2>
-                    <h2>{{record.current_time}}</h2>
                     {% if record.war_info.clan.stars > record.war_info.opponent.stars %}
                         <h1 class="result-heading">Win</h1>
                     {% elif record.war_info.clan.stars < record.war_info.opponent.stars %}
@@ -163,7 +162,7 @@
                             {% for data in summary_member_data %}
                                 {% if data.current_time == record.current_time %}
                                     <tr>
-                                        <td>{{data.player.monthly_data.all.0.player_name}}</td>
+                                        <td>{{data.player.monthly_data.all.0.data.name}}</td>
                                         <td>#{{data.player}}</td>
                                         <td>{{data.num_wars}}</td>
                                         <td>{{data.num_attacks}}</td>
@@ -559,8 +558,13 @@
     }
 
     // Reset the table to default sorting (by Trophies in descending order)
-    function resetTableToDefault() {
-        var defaultRow = 2;
+    function resetTableToDefault(typeOfData) {
+        if(typeOfData == "summary"){
+            var defaultRow = 2;
+        }
+        else if(typeOfData == "in-depth"){
+            var defaultRow = 2;
+        }
         const table = document.getElementById("sortableTable");
         let rows = table.rows;
 
@@ -569,7 +573,11 @@
             let x = parseInt(a.cells[defaultRow].innerText, 10); 
             let y = parseInt(b.cells[defaultRow].innerText, 10);
             console.log(x, y);
-            return x - y; // Descending order
+            if (typeOfData == "summary") {
+                return y - x; // Descending order for summary
+            } else if (typeOfData == "in-depth") {
+                return x - y; // Ascending order for in-depth
+            }
         });
         sortedRows.forEach(row => table.appendChild(row));
     }
@@ -594,7 +602,7 @@
     }
 
     // Initialize the table to be sorted by Trophies in descending order on page load
-    window.onload = resetTableToDefault;
+    window.onload = resetTableToDefault("{{type_of_data}}");
 </script>
 
 {% endblock %}
