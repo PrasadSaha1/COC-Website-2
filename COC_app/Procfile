@@ -1,2 +1,2 @@
 release: python manage.py migrate && python manage.py collectstatic --noinput
-web: gunicorn COC_app.wsgi:application
+web: python COC_app/manage.py runserver 0.0.0.0:$PORT
