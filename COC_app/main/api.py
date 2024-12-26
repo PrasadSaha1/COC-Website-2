@@ -14,7 +14,6 @@ def get_monthly_clan_war_info():
     current_time = datetime.now().strftime('%H:%M:%S')  # this is temporary
 
     if current_date.month == 1:
-        # If it's January, go to December of the previous year
         previous_month = 12
         year = current_date.year - 1
     else:
