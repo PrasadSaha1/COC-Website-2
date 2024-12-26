@@ -1,2 +1,2 @@
+release: python COC_app/manage.py migrate && python COC_app/manage.py collectstatic --noinput
 web: gunicorn COC_app.wsgi:application
-
