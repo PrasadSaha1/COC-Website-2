@@ -6,3 +6,4 @@ urlpatterns = [
     path('', include("main.urls")),
     path('register/', include("register.urls")),
 ]
+
