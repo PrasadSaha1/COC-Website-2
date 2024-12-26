@@ -1,2 +1,2 @@
-web: gunicorn COC_app.COC_app.wsgi:application
+web: gunicorn COC_app.wsgi:application
 
