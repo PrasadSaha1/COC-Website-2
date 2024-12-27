@@ -3,8 +3,21 @@
 
 <div id="content" style="position: relative;">
     {% block content %}
-    <!-- Back button positioned at the top left corner -->
-     <!--  <button onclick="goBack()" class="back-button">Back</button> -->
+    {% if change %}
+        <div class="alert {% if change == 'too_many_clans' %}alert-danger{% else %}alert-success{% endif %} mt-3">
+            {% if change == "clan_saved" %}
+                <strong>{{ clan_data.name }} saved</strong>
+            {% elif change == "clan_removed" %}
+                <strong>{{ clan_data.name }} removed</strong>
+            {% elif change == "too_many_clans" %}
+                <strong>You cannot save more than 5 clans. Please remove one before adding another.</strong>
+            {% endif %}
+        </div>
+    {% endif %}
+    <form method="post" action="{% url 'my_clans' %}" class="button-form">
+        {% csrf_token %}
+        <button type="submit" name="back" class="view-button">Back</button>
+    </form>
      <img src="{{ clan_data.badgeUrls.medium }}" alt="{{ clan_data.name }} Badge" style="max-width: 200px; height: auto; border-radius: 8px; display: block; margin: 0 auto;">
      <div style="text-align: center;">
         <h3 style="margin: 0;">{{clan_data.name}}</h3>
@@ -13,6 +26,7 @@
     </div>
 
     {% if not is_being_tracked %}
+        <h4>Tracking a clan's history will also track the history of its players</h4>
         <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
             <form method="post" action="{% url 'view_clan' clan_tag mode %}" class="button-form">
                 {% csrf_token %}
@@ -21,7 +35,7 @@
             </form>
         </div>
     {% else %}
-        <h4>This Clans's history is currently being tracked</h4>
+        <h4>This Clans's history is currently being tracked, along with all of its players</h4>
         <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
             <form method="post" action="{% url 'view_clan_war_history' clan_tag %}" class="button-form">
                 {% csrf_token %}
@@ -78,7 +92,7 @@
     
 
     <h1 style="text-align: center; margin-top: 30px;">Clan Members</h1>
-    <h4 style="text-align: center; margin-top: 30px;">Click on a Player's name to view their profile and upgrade history</h4>
+    <h4 style="text-align: center; margin-top: 30px;">Click on a player's name to view their profile and upgrade history</h4>
 
     <div class="button-container">
         <form method="post" action="{% url 'view_clan' clan_tag 'general' %}">
@@ -263,14 +277,18 @@
                                 break;
                             }
                         }
-                    } else if (sortingType === "string") { // For other columns, use the default string-based comparison
+                    } else if (sortingType === "string") {
+                        // For other columns, use the default string-based comparison
+                        let xText = x.textContent.trim().toLowerCase(); // Use textContent and trim to clean up
+                        let yText = y.textContent.trim().toLowerCase();
+
                         if (dir === "asc") {
-                            if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                            if (xText > yText) {
                                 shouldSwitch = true;
-                                break;
+                                break; // Once you've determined a switch, no need to keep comparing
                             }
                         } else if (dir === "desc") {
-                            if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                            if (xText < yText) {
                                 shouldSwitch = true;
                                 break;
                             }

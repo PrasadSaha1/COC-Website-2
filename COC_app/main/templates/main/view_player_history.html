@@ -4,6 +4,10 @@
 
 <div id="content">
     {% block content %}
+    <form method="post" action="{% url 'view_player' player.tag %}" class="button-form">
+        {% csrf_token %}
+        <button type="submit" name="back" class="view-button">Back</button>
+    </form>
     <h1 class="centered-heading">History for {{ player.name }}</h1>
 
     {% if monthly_data == "N/A" %}
@@ -33,138 +37,140 @@
                 <p><strong>Attack Wins:</strong> {{ record.data.attackWins }}</p>
                 <p><strong>Defense Wins:</strong> {{ record.data.defenseWins }}</p>
 
-                <div style="width: 60%;">
-                    <h2 style=" margin-bottom: 20px;">Heroes</h2>
-
-                    <table id="sortableTable" class="sortable-table">
-                        <thead>
-                            <tr>
-                                <th>Icon</th>
-                                <th>Name</th>
-                                <th>Village</th>
-                                <th>Level</th>
-                                <th>Last TH/BH Max Level</th>
-                                <th>Current TH/BH Max Level</th>
-                                <th>Equipment 1</th>
-                                <th>Equipment 2</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for hero in record.data.heroes %}
-                            <tr>
-                                <td>
-                                    <img src="{% static 'images/Avatar_Hero_'|add:hero.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 150px;">
-                                </td>                              
-                                <td>{{hero.name}}</td>
-                                {% if hero.village == "home" %}
-                                    <td>Home Village</td>
-                                {% elif hero.village == "builderBase" %}
-                                    <td>Builder Base</td>
-                                {% endif %}
-                                <td>{{hero.level}}</td>
-                                {% if hero.name == "Battle Machine" or hero.name == "Battle Copter" %}
-                                    <td>{{ hero.name| get_max_level_previous_TH:player.builderHallLevel }}</td>
-                                    <td>{{ hero.name| get_max_level_current_TH:player.builderHallLevel }}</td>
-                                {% else %}
-                                    <td>{{ hero.name| get_max_level_previous_TH:player.townHallLevel }}</td>
-                                    <td>{{ hero.name| get_max_level_current_TH:player.townHallLevel }}</td>
-                                {% endif %}
-                                    {% for item in hero.equipment %}
-                                    <td>{{ item.name }}</td>
+                <div>
+                    <h2 style="margin-bottom: 20px;" class="collapsible" onclick="toggleCollapse('heroes_{{ record.time_fetched|slugify }}')">Heroes (click to expand)</h2>
+                    <div id="heroes_{{ record.time_fetched|slugify }}" class="collapsible-content">
+                        <table id="sortableTable" class="sortable-table">
+                            <thead>
+                                <tr>
+                                    <th>Icon</th>
+                                    <th>Name</th>
+                                    <th>Village</th>
+                                    <th>Level</th>
+                                    <th>Last TH/BH Max Level</th>
+                                    <th>Current TH/BH Max Level</th>
+                                    <th>Equipment 1</th>
+                                    <th>Equipment 2</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for hero in record.data.heroes %}
+                                <tr>
+                                    <td>
+                                        <img src="{% static 'images/Avatar_Hero_'|add:hero.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 150px;">
+                                    </td>                              
+                                    <td>{{hero.name}}</td>
+                                    {% if hero.village == "home" %}
+                                        <td>Home Village</td>
+                                    {% elif hero.village == "builderBase" %}
+                                        <td>Builder Base</td>
+                                    {% endif %}
+                                    <td>{{hero.level}}</td>
+                                    {% if hero.name == "Battle Machine" or hero.name == "Battle Copter" %}
+                                        <td>{{ hero.name| get_max_level_previous_TH:player.builderHallLevel }}</td>
+                                        <td>{{ hero.name| get_max_level_current_TH:player.builderHallLevel }}</td>
+                                    {% else %}
+                                        <td>{{ hero.name| get_max_level_previous_TH:player.townHallLevel }}</td>
+                                        <td>{{ hero.name| get_max_level_current_TH:player.townHallLevel }}</td>
+                                    {% endif %}
+                                        {% for item in hero.equipment %}
+                                        <td>{{ item.name }}</td>
+                                    {% endfor %}
+                                </tr>
                                 {% endfor %}
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
 
-                <div style="width: 60%;">
-                    <h2 style=" margin-bottom: 20px;">Equipment</h2>
-
-                    <table id="sortableTable" class="sortable-table">
-                        <thead>
-                            <tr>
-                                <th>Icon</th>
-                                <th>Name</th>
-                                <th>Hero</th>
-                                <th>Level</th>
-                                <th>In Use</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for equipment in record.data.heroEquipment %}
-                            <tr>
-                                <td>
-                                    <img src="{% static 'images/'|add:equipment.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 150px;">
-                                </td>                              
-                                <td>{{equipment.name}}</td>
-                                <td>{{ equipment.name| equipment_to_hero }}</td>
-                                <td>{{equipment.level}}</td>
-                                <td>{{equipment.name|check_in_use:player}}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div>
+                    <h2 style="margin-bottom: 20px;" class="collapsible" onclick="toggleCollapse('equipment_{{ record.time_fetched|slugify }}')">Equipment (click to expand)</h2>
+                    <div id="equipment_{{ record.time_fetched|slugify }}" class="collapsible-content">        
+                        <table id="sortableTable" class="sortable-table">
+                            <thead>
+                                <tr>
+                                    <th>Icon</th>
+                                    <th>Name</th>
+                                    <th>Hero</th>
+                                    <th>Level</th>
+                                    <th>In Use</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for equipment in record.data.heroEquipment|sort_equipment:player %}
+                                <tr>
+                                    <td>
+                                        <img src="{% static 'images/'|add:equipment.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 150px;">
+                                    </td>                              
+                                    <td>{{equipment.name}}</td>
+                                    <td>{{ equipment.name| equipment_to_hero }}</td>
+                                    <td>{{equipment.level}}</td>
+                                    <td>{{equipment.name|check_in_use_1:player}}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div style="width: 60%;">
-                    <h2 style=" margin-bottom: 20px;">Other Units</h2>
-                    
-                    <h4>Troops (Home Village)</h4>
-                    {% for troop in record.data.troops|filter_until_lassi %}
+                <div>
+                    <h2 style="margin-bottom: 20px;" class="collapsible" onclick="toggleCollapse('other_units_{{ record.time_fetched|slugify }}')">Other Units (click to expand)</h2>
+                    <div id="other_units_{{ record.time_fetched|slugify }}" class="collapsible-content">                                        
+                        <h4>Troops (Home Village)</h4>
+                        {% for troop in record.data.troops|filter_until_lassi %}
+                            {% if troop.village == "home" and troop.name|does_not_start_with:"Super" and troop.name|not_in:"Sneaky Goblin,Rocket Balloon,Inferno Dragon,Ice Hound" and troop.name|not_in:"Wall Wrecker,Battle Blimp,Stone Slammer,Siege Barracks,Battle Drill,Flame Flinger,Log Launcher" %}
+                            <div style="position: relative; display: inline-block;">
+                                <img src="{% static 'images/Avatar_'|add:troop.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ troop.name }}">
+                                <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
+                                    {{ troop.level }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                        <h4>Troops (Builder Base)</h4>
+                        {% for troop in record.data.troops %}
+                            {% if troop.village == "builderBase" %}
+                            <div style="position: relative; display: inline-block;">
+                                <img src="{% static 'images/Avatar_'|add:troop.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ troop.name }}">
+                                <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
+                                    {{ troop.level }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                        <h4>Spells</h4>
+                        {% for spell in record.data.spells %}
+                            <div style="position: relative; display: inline-block;">
+                                <img src="{% static 'images/'|add:spell.name|replace_space_with_underscore|add:'_info.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ spell.name }}">
+                                <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
+                                    {{ spell.level }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <h4>Siege Machines</h4>
+                        {% for troop in record.data.troops %}
+                            {% if troop.name|is_in_list:"Wall Wrecker,Battle Blimp,Stone Slammer,Siege Barracks,Battle Drill,Flame Flinger,Log Launcher" %}
+                            <div style="position: relative; display: inline-block;">
+                                <img src="{% static 'images/Avatar_'|add:troop.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ troop.name }}">
+                                <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
+                                    {{ troop.level }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                        <h4>Pets</h4>
+                        {% for troop in record.data.troops|filter_from_lassi %}
                         {% if troop.village == "home" and troop.name|does_not_start_with:"Super" and troop.name|not_in:"Sneaky Goblin,Rocket Balloon,Inferno Dragon,Ice Hound" and troop.name|not_in:"Wall Wrecker,Battle Blimp,Stone Slammer,Siege Barracks,Battle Drill,Flame Flinger,Log Launcher" %}
-                        <div style="position: relative; display: inline-block;">
-                            <img src="{% static 'images/Avatar_'|add:troop.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ troop.name }}">
-                            <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
-                                {{ troop.level }}
+                            <div style="position: relative; display: inline-block;">
+                                <img src="{% static 'images/Avatar_'|add:troop.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ troop.name }}">
+                                <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
+                                    {{ troop.level }}
+                                </div>
                             </div>
-                        </div>
-                        {% endif %}
-                    {% endfor %}
-                    <h4>Troops (Builder Base)</h4>
-                    {% for troop in record.data.troops %}
-                        {% if troop.village == "builderBase" %}
-                        <div style="position: relative; display: inline-block;">
-                            <img src="{% static 'images/Avatar_'|add:troop.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ troop.name }}">
-                            <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
-                                {{ troop.level }}
-                            </div>
-                        </div>
-                        {% endif %}
-                    {% endfor %}
-                    <h4>Spells</h4>
-                    {% for spell in record.data.spells %}
-                        <div style="position: relative; display: inline-block;">
-                            <img src="{% static 'images/'|add:spell.name|replace_space_with_underscore|add:'_info.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ spell.name }}">
-                            <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
-                                {{ spell.level }}
-                            </div>
-                        </div>
-                    {% endfor %}
-                    <h4>Siege Machines</h4>
-                    {% for troop in record.data.troops %}
-                        {% if troop.name|is_in_list:"Wall Wrecker,Battle Blimp,Stone Slammer,Siege Barracks,Battle Drill,Flame Flinger,Log Launcher" %}
-                        <div style="position: relative; display: inline-block;">
-                            <img src="{% static 'images/Avatar_'|add:troop.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ troop.name }}">
-                            <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
-                                {{ troop.level }}
-                            </div>
-                        </div>
-                        {% endif %}
-                    {% endfor %}
-                    <h4>Pets</h4>
-                    {% for troop in record.data.troops|filter_from_lassi %}
-                    {% if troop.village == "home" and troop.name|does_not_start_with:"Super" and troop.name|not_in:"Sneaky Goblin,Rocket Balloon,Inferno Dragon,Ice Hound" and troop.name|not_in:"Wall Wrecker,Battle Blimp,Stone Slammer,Siege Barracks,Battle Drill,Flame Flinger,Log Launcher" %}
-                        <div style="position: relative; display: inline-block;">
-                            <img src="{% static 'images/Avatar_'|add:troop.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 75px; max-height: 75px;" title="{{ troop.name }}">
-                            <div style="position: absolute; bottom: 5px; right: 5px; color: white; font-weight: bold; background-color: rgba(0, 0, 0, 0.5); padding: 2px;">
-                                {{ troop.level }}
-                            </div>
-                        </div>
-                        {% endif %}
-                    {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 </div>
             </div>    
             {% endif %}
@@ -277,11 +283,39 @@
         .clan-info {
             margin-bottom: 20px;
         }
-        table {
-            width: 150%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
+        .sortable-table {
+    width: 100%; /* Make the table take up the full width */
+    table-layout: auto; /* Automatically adjust the column widths */
+    border-collapse: collapse; /* Collapses borders */
+}
+
+.sortable-table th,
+.sortable-table td {
+    padding: 8px; /* Add some padding */
+    border: 1px solid #ddd; /* Light border for table cells */
+    text-align: left; /* Align text to the left */
+}
+
+.sortable-table th {
+    background-color: #f2f2f2; /* Light gray background for headers */
+    font-weight: bold; /* Make headers bold */
+}
+
+.sortable-table td {
+    word-wrap: break-word; /* Allow long text to wrap within the cell */
+}
+
+/* Optional: You can set a max width for columns if needed */
+.sortable-table th:nth-child(1),
+.sortable-table td:nth-child(1) {
+    max-width: 150px; /* Set max width for the first column */
+}
+
+.sortable-table th:nth-child(2),
+.sortable-table td:nth-child(2) {
+    max-width: 120px; /* Set max width for the second column */
+}
+
 
         th, td {
             padding: 12px 15px;
@@ -356,7 +390,36 @@
             z-index: 10; /* Ensure it is above other content */
             transition: background-color 0.3s ease;
         }
+          /* Collapsible content styles */
+    .collapsible {
+        cursor: pointer;
+        padding: 10px;
+        background-color: #f1f1f1;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin: 10px 0;
+        text-align: center;
+    }
+
+    .collapsible-content {
+        padding: 0 10px;
+        display: none;
+        background-color: #f9f9f9;
+        border-top: 1px solid #ddd;
+    }
         
 </style>
+{% block extra_scripts %}
+<script>
+    function toggleCollapse(id) {
+        var content = document.getElementById(id);
+        if (content.style.display === "block") {
+            content.style.display = "none";
+        } else {
+            content.style.display = "block";
+        }
+    }
+</script>
+{% endblock %}
 {% endblock %}
 {% endblock %}

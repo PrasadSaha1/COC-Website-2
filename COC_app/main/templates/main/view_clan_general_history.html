@@ -4,6 +4,10 @@
 
 <div id="content">
     {% block content %}
+    <form method="post" action="{% url 'view_clan' clan.tag 'general' %}" class="button-form">
+        {% csrf_token %}
+        <button type="submit" name="back" class="view-button">Back</button>
+    </form>
     <h1 class="centered-heading">General History for {{ clan.name }}</h1>
 
     {% if monthly_data_general == "N/A" %}
@@ -23,6 +27,7 @@
                     <label><input type="radio" name="type_of_member_data" value="general" {% if type_of_member_data == "general" %}checked{% endif %}> General</label>
                     <label><input type="radio" name="type_of_member_data" value="home_village" {% if type_of_member_data == "home_village" %}checked{% endif %}> Home Village</label>
                     <label><input type="radio" name="type_of_member_data" value="builder_base" {% if type_of_member_data == "builder_base" %}checked{% endif %}> Builder Base</label>
+                    <label><input type="radio" name="type_of_member_data" value="clan_capital" {% if type_of_member_data == "clan_capital" %}checked{% endif %}> Clan Capital</label>
                     <label><input type="radio" name="type_of_member_data" value="all" {% if type_of_member_data == "all" %}checked{% endif %}> All</label>
                 </div>
         
@@ -33,178 +38,137 @@
             </form>
         </div>        
 
-        {% if type_of_data == "in-depth" %}
-            {% for record in monthly_data_general %}
-                <div class="war-section" style="background-color: white;">
-
-                    <h2>{{record.month_year|date:"F Y"}}</h2>
-                    <h3 class="center-text">Fetched on {{record.day_fetched}} at {{record.time_fetched}} EST</h3>  <!-- Use the custom tag here -->
-                    <img src="{{ record.data.badgeUrls.medium }}" alt="{{ record.data.name }} Badge" style="max-width: 200px; height: auto; border-radius: 8px; display: block; margin: 0 auto;">
-                    <h5><strong>Description: </strong>{{record.data.description}}</h5>
-                    <div class="clan-container">
-                        <div class="clan-info left" style="background-color: #e28743;">
-                            <h2>Basic Information</h2>
-                            <h5><strong>Location: </strong> {{ record.data.location.name }}</h5>
-                            <h5><strong>Type: </strong>{% clan_type_display record.data.type %}</h5>
-                            <h5><strong>Required Trophies (Home Village): </strong> {{ record.data.requiredTrophies }}</h5>
-                            <h5><strong>Required Trophies (Builder Base): </strong> {{ record.data.requiredBuilderBaseTrophies }}</h5>
-                            <h5><strong>Required Town Hall Level: </strong> {{ record.data.requiredTownhallLevel }}</h5>
-                            <h5><strong>War Frequency: </strong>{% war_frequency_display record.data.warFrequency %}</h5>
-                        </div>
-                    
-                        <div class="clan-info right" style="background-color: #e28743;">
-                            <h2>Statistics</h2>
-                            <h5><strong>Points:</strong> {{ record.data.clanPoints }}</h5>
-                            <h5><strong>Builder Base Points:</strong> {{record.data.clanBuilderBasePoints}}</h5>
-                            <h5><strong>Clan Capital Points:</strong> {{record.data.clanCapitalPoints}} ({{record.data.capitalLeague.name}})</h5>
-                            <h5><strong>War Win Streak:</strong> {{ record.data.warWinStreak }} </h5>
-                            <h5><strong>War Wins/Draws/Losses:</strong> {{ record.data.warWins }}/{{ record.data.warTies }}/{{ record.data.warLosses }}</h5>
-                            <h5><strong>Number of Members:</strong> {{ record.data.members }}</h5>
-                            <h5><strong>Capital Hall Level:</strong> {{ record.data.clanCapital.capitalHallLevel }}</h5>
-                        </div>
-
+        {% for record in monthly_data_general %}
+            <div class="war-section" style="background-color: white;">
+                <h2>{{record.month_year|date:"F Y"}}</h2>
+                <h3 class="center-text">Fetched on {{record.day_fetched}} at {{record.time_fetched}} EST</h3> 
+                <img src="{{ record.data.badgeUrls.medium }}" alt="{{ record.data.name }} Badge" style="max-width: 200px; height: auto; border-radius: 8px; display: block; margin: 0 auto;">
+                <h5><strong>Description: </strong>{{record.data.description}}</h5>
+                <div class="clan-container">
+                    <div class="clan-info left" style="background-color: #e28743;">
+                        <h2>Basic Information</h2>
+                        <h5><strong>Location: </strong> {{ record.data.location.name }}</h5>
+                        <h5><strong>Type: </strong>{% clan_type_display record.data.type %}</h5>
+                        <h5><strong>Required Trophies (Home Village): </strong> {{ record.data.requiredTrophies }}</h5>
+                        <h5><strong>Required Trophies (Builder Base): </strong> {{ record.data.requiredBuilderBaseTrophies }}</h5>
+                        <h5><strong>Required Town Hall Level: </strong> {{ record.data.requiredTownhallLevel }}</h5>
+                        <h5><strong>War Frequency: </strong>{% war_frequency_display record.data.warFrequency %}</h5>
+                    </div>
+                
+                    <div class="clan-info right" style="background-color: #e28743;">
+                        <h2>Statistics</h2>
+                        <h5><strong>Points:</strong> {{ record.data.clanPoints }}</h5>
+                        <h5><strong>Builder Base Points:</strong> {{record.data.clanBuilderBasePoints}}</h5>
+                        <h5><strong>Clan Capital Points:</strong> {{record.data.clanCapitalPoints}} ({{record.data.capitalLeague.name}})</h5>
+                        <h5><strong>War Win Streak:</strong> {{ record.data.warWinStreak }} </h5>
+                        <h5><strong>War Wins/Draws/Losses:</strong> {{ record.data.warWins }}/{{ record.data.warTies }}/{{ record.data.warLosses }}</h5>
+                        <h5><strong>Number of Members:</strong> {{ record.data.members }}</h5>
+                        <h5><strong>Capital Hall Level:</strong> {{ record.data.clanCapital.capitalHallLevel }}</h5>
                     </div>
 
-                    <div style="width: 50%; margin: 0 auto; text-align: left; line-height: 1.6; background-color: #e28743; padding: 20px; border-radius: 8px;">
-                        <h2 style="text-align: center; margin-bottom: 20px;">Clan Labels</h2>
-                        <div style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap;">
-                            {% for label in record.data.labels %}
-                                <div style="text-align: center;">
-                                    <img src="{{ label.iconUrls.small }}" alt="{{ label.name }} Icon" style="max-width: 50px; height: auto; border-radius: 8px; display: block; margin: 0 auto;">
-                                    <p style="font-weight: bold; margin-top: 10px;">{{ label.name }}</p>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    
-                    {% if type_of_member_data != "none" %}
-                        <h1 class="result-heading">Member Data</h1>
-                        <table id="sortableTable" class="sortable-table">
-                            <thead>
-                                <tr>
-                                    {% if type_of_member_data == "general" %}
-                                        <th onclick="sortTable('string', 0)">Name <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('string', 1)">Tag <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('role', 2)">Role <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('int', 3)">Donations <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('int', 4)">Donations Recieved <span class="sort-arrow"></span></th>
-                                    {% elif type_of_member_data == "home_village" %}
-                                        <th onclick="sortTable('none', 0)">Badge <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('string', 1)">Name <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('int', 2)">Town Hall <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('int', 3)">Trophies <span class="sort-arrow"></span></th>
-                                    {% elif type_of_member_data == "builder_base" %}
-                                        <th onclick="sortTable('string', 0)">Name <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('int', 1)">Builder Base Trophies <span class="sort-arrow"></span></th>
-                                    {% elif type_of_member_data == "all" %}
-                                        <th onclick="sortTable('none', 0)">Badge <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('string', 1)">Name <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('string', 2)">Tag <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('role', 3)">Role <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('int', 4)">Donations <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('int', 5)">Donations Recieved <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('int', 6)">Town Hall <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('int', 7)">Home Village Trophies <span class="sort-arrow"></span></th>
-                                        <th onclick="sortTable('int', 8)">Builder Base Trophies <span class="sort-arrow"></span></th>
-                                    {% endif %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for member in summary_member_data %}
-                                    {% if member.month_year == record.month_year %} 
-                                    <tr>
-                                        {% if type_of_member_data == "general" %}
-                                            <td><a href="{% url 'view_player_history' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
-                                            <td>{{ member.data.tag }}</td>
-                                            <td>{% role_display member.data.role %}</td>
-                                            <td>{{ member.data.donations }}</td>
-                                            <td>{{ member.data.donationsReceived }}</td>
-                                        {% elif type_of_member_data == "home_village" %}
-                                            <td>    
-                                            {% if member.data.league %}
-                                                <img src="{{ member.data.league.iconUrls.small }}" style="max-width: 150px;">
-                                            {% else %}
-                                                <img src="{% static 'images/unranked_badge.webp' %}" style="max-width: 150px;">
-                                            {% endif %}                                            </td>
-                                            <td>
-                                                <a href="{% url 'view_player_history' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
-                                            <td>{{ member.data.townHallLevel }}</td>
-                                            <td>{{ member.data.trophies }}</td>
-                                        {% elif type_of_member_data == "builder_base" %}
-                                            <td><a href="{% url 'view_player_history' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
-                                            <td>{{ member.data.builderBaseTrophies }}</td>
-                                        {% elif type_of_member_data == "all" %}
-                                            <td>    
-                                            {% if member.data.league %}
-                                                <img src="{{ member.data.league.iconUrls.small }}" style="max-width: 150px;">
-                                            {% else %}
-                                                <img src="{% static 'images/unranked_badge.webp' %}" style="max-width: 150px;">
-                                            {% endif %}                                            </td>
-                                            <td>
-                                                <a href="{% url 'view_player_history' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
-                                            <td>{{ member.data.tag }}</td>
-                                            <td>{% role_display member.data.role %}</td>
-                                            <td>{{ member.data.donations }}</td>
-                                            <td>{{ member.data.donationsReceived }}</td>
-                                            <td>{{ member.data.townHallLevel }}</td>
-                                            <td>{{ member.data.trophies }}</td>
-                                            <td>{{ member.data.builderBaseTrophies }}</td>
-                                        {% endif %}
-                                    </tr>
-                                    {% endif %}
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% endif %}
                 </div>
-            {% endfor %}
-        {% else %}
-            {% for record in monthly_data_war %}
-                <div class="war-section" style="background-color: white;">
-                    <div>
-                       <h2>{{ record.month_year|date:"F Y" }}</h2>
-                       <h4>{{ record.current_time }}</h4>
-                       <p><strong>Number of Wars:</strong> {{ record.num_wars|floatformat:0 }}</p>
-                       <p><strong>Win rate:</strong> {{ record.win_rate|mul:100|floatformat:2 }}%</p>
-                       <p><strong>Percent of Attacks Completed:</strong> {{ record.percent_attacks_completed|mul:100|floatformat:2 }}%</p>
-                       <p><strong>Average War Size:</strong> {{ record.average_war_size|floatformat:2 }}</p>
-                       <p><strong>Average Total Destruction:</strong> {{ record.average_total_destruction|floatformat:2 }}%</p>
-                       <p><strong>Average Stars per Player:</strong> {{ record.average_stars_per_player|floatformat:2 }} ({{record.average_stars_per_player|mul:33.3|floatformat:2 }}% of total stars)</p>                       
+
+                <div style="width: 50%; margin: 0 auto; text-align: left; line-height: 1.6; background-color: #e28743; padding: 20px; border-radius: 8px;">
+                    <h2 style="text-align: center; margin-bottom: 20px;">Clan Labels</h2>
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap;">
+                        {% for label in record.data.labels %}
+                            <div style="text-align: center;">
+                                <img src="{{ label.iconUrls.small }}" alt="{{ label.name }} Icon" style="max-width: 50px; height: auto; border-radius: 8px; display: block; margin: 0 auto;">
+                                <p style="font-weight: bold; margin-top: 10px;">{{ label.name }}</p>
+                            </div>
+                        {% endfor %}
                     </div>
-                {% if include_member_data == "yes" %}
+                </div>
+                
+                {% if type_of_member_data != "none" %}
                     <h1 class="result-heading">Member Data</h1>
                     <table id="sortableTable" class="sortable-table">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Tag</th>
-                                <th>Number of Wars</th>
-                                <th>Number of Attacks</th>
-                                <th>Number of Missed Attacks</th>
-                                <th>Average Stars per War</th>
-                                <th>Average Destruction per war</th>
+                                {% if type_of_member_data == "general" %}
+                                    <th onclick="sortTable('string', 0)">Name <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('string', 1)">Tag <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('role', 2)">Role <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 3)">Donations <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 4)">Donations Recieved <span class="sort-arrow"></span></th>
+                                {% elif type_of_member_data == "home_village" %}
+                                    <th onclick="sortTable('none', 0)">Badge <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('string', 1)">Name <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 2)">Town Hall <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 3)">Trophies <span class="sort-arrow"></span></th>
+                                {% elif type_of_member_data == "builder_base" %}
+                                    <th onclick="sortTable('string', 0)">Name <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 1)">Builder Base Trophies <span class="sort-arrow"></span></th>
+                                {% elif type_of_member_data == "clan_capital" %}
+                                    <th onclick="sortTable('string', 0)">Name <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 1)">Clan Capital Contributions <span class="sort-arrow"></span></th>
+                                {% elif type_of_member_data == "all" %}
+                                    <th onclick="sortTable('none', 0)">Badge <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('string', 1)">Name <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('string', 2)">Tag <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('role', 3)">Role <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 4)">Donations <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 5)">Donations Recieved <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 6)">Town Hall <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 7)">Home Village Trophies <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 8)">Builder Base Trophies <span class="sort-arrow"></span></th>
+                                    <th onclick="sortTable('int', 9)">Clan Capital Contributions <span class="sort-arrow"></span></th>
+                                {% endif %}
                             </tr>
                         </thead>
                         <tbody>
-                            {% for data in summary_member_data %}
-                                {% if data.current_time == record.current_time %}
-                                    <tr>
-                                        <td>{{data.player.monthly_data.all.0.player_name}}</td>
-                                        <td>#{{data.player}}</td>
-                                        <td>{{data.num_wars}}</td>
-                                        <td>{{data.num_attacks}}</td>
-                                        <td>{{data.num_missed_attacks}}</td>
-                                        <td>{{data.average_total_stars}}</td>
-                                        <td>{{data.average_total_destruction}}</td>
-                                    </tr>
+                            {% for member in summary_member_data %}
+                                {% if member.month_year == record.month_year %} 
+                                <tr>
+                                    {% if type_of_member_data == "general" %}
+                                        <td><a href="{% url 'view_player_history' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
+                                        <td>{{ member.data.tag }}</td>
+                                        <td>{% role_display member.data.role %}</td>
+                                        <td>{{ member.data.donations }}</td>
+                                        <td>{{ member.data.donationsReceived }}</td>
+                                    {% elif type_of_member_data == "home_village" %}
+                                        <td>    
+                                        {% if member.data.league %}
+                                            <img src="{{ member.data.league.iconUrls.small }}" style="max-width: 150px;">
+                                        {% else %}
+                                            <img src="{% static 'images/unranked_badge.webp' %}" style="max-width: 150px;">
+                                        {% endif %}                                            </td>
+                                        <td>
+                                            <a href="{% url 'view_player_history' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
+                                        <td>{{ member.data.townHallLevel }}</td>
+                                        <td>{{ member.data.trophies }}</td>
+                                    {% elif type_of_member_data == "builder_base" %}
+                                        <td><a href="{% url 'view_player_history' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
+                                        <td>{{ member.data.builderBaseTrophies }}</td>
+                                    {% elif type_of_member_data == "clan_capital" %}
+                                        <td><a href="{% url 'view_player_history' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
+                                        <td>{{ member.data.clanCapitalContributions }}</td>
+                                    {% elif type_of_member_data == "all" %}
+                                        <td>    
+                                        {% if member.data.league %}
+                                            <img src="{{ member.data.league.iconUrls.small }}" style="max-width: 150px;">
+                                        {% else %}
+                                            <img src="{% static 'images/unranked_badge.webp' %}" style="max-width: 150px;">
+                                        {% endif %}                                            </td>
+                                        <td>
+                                            <a href="{% url 'view_player_history' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
+                                        <td>{{ member.data.tag }}</td>
+                                        <td>{% role_display member.data.role %}</td>
+                                        <td>{{ member.data.donations }}</td>
+                                        <td>{{ member.data.donationsReceived }}</td>
+                                        <td>{{ member.data.townHallLevel }}</td>
+                                        <td>{{ member.data.trophies }}</td>
+                                        <td>{{ member.data.builderBaseTrophies }}</td>
+                                        <td>{{ member.data.clanCapitalContributions }}</td>
+                                    {% endif %}
+                                </tr>
                                 {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
-                </div>
                 {% endif %}
-            {% endfor %}
-        {% endif %}
+            </div>
+        {% endfor %}
     </div>
     {% endif %}
 </div>
@@ -501,10 +465,6 @@
 </style>
 
 <script>
-    function goBack() {
-        window.history.back();
-    }
-
     let currentSortColumn = 4; // Default column is Trophies (index 4)
     let sortDirection = 'desc'; // Default sort direction is descending (highest first)
     
@@ -584,20 +544,24 @@
                             shouldSwitch = true;
                             break;
                         }
-                    }
-                } else if (sortingType === "string") { // For other columns, use the default string-based comparison
-                    if (dir === "asc") {
-                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-                            shouldSwitch = true;
-                            break;
                         }
-                    } else if (dir === "desc") {
-                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                            shouldSwitch = true;
-                            break;
+                    } else if (sortingType === "string") {
+                        // For other columns, use the default string-based comparison
+                        let xText = x.textContent.trim().toLowerCase(); // Use textContent and trim to clean up
+                        let yText = y.textContent.trim().toLowerCase();
+
+                        if (dir === "asc") {
+                            if (xText > yText) {
+                                shouldSwitch = true;
+                                break; // Once you've determined a switch, no need to keep comparing
+                            }
+                        } else if (dir === "desc") {
+                            if (xText < yText) {
+                                shouldSwitch = true;
+                                break;
+                            }
                         }
-                    }
-                } else if (sortingType === "int") { // Integer comparison
+                    }else if (sortingType === "int") { // Integer comparison
                     let xInt = parseInt(x.innerHTML.trim(), 10);
                     let yInt = parseInt(y.innerHTML.trim(), 10);
 
@@ -629,19 +593,19 @@
 
     // Reset the table to default sorting (by Trophies in descending order)
     function resetTableToDefault() {
-        if ("{{mode}}" === "general") {
+        if ("{{type_of_member_data}}" === "general") {
             defaultRow = 2;
             defaultRowType = "role"
         }
-        else if ("{{mode}}" === "home_village"){
+        else if ("{{type_of_member_data}}" === "home_village"){
             defaultRow = 3;
             defaultRowType = "int"
         }
-        else if ("{{mode}}" === "builder_base"){
+        else if ("{{type_of_member_data}}" === "builder_base" || "{{type_of_member_data}}" === "clan_capital" ){
             defaultRow = 1;
             defaultRowType = "int"
         }
-        else if ("{{mode}}" === "all"){
+        else if ("{{type_of_member_data}}" === "all"){
             defaultRow = 7;
             defaultRowType = "int"
         }
@@ -653,7 +617,6 @@
             let sortedRows = Array.from(rows).slice(1).sort((a, b) => {
                 let x = parseInt(a.cells[defaultRow].innerText, 10); 
                 let y = parseInt(b.cells[defaultRow].innerText, 10);
-                console.log(x, y);
                 return y - x; // Descending order
             });
             sortedRows.forEach(row => table.appendChild(row));

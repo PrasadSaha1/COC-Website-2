@@ -4,6 +4,10 @@
 
 <div id="content">
     {% block content %}
+    <form method="post" action="{% url 'view_clan' clan.tag 'general' %}" class="button-form">
+        {% csrf_token %}
+        <button type="submit" name="back" class="view-button">Back</button>
+    </form>
     <h1 class="centered-heading">War History for {{ clan.name }}</h1>
 
     {% if each_war_data == "N/A" %}
@@ -84,6 +88,7 @@
                         <div class="clan-info left">
                             <img src="{{ record.war_info.clan.badgeUrls.medium }}" alt="{{ record.war_info.clan.name }} Badge" style="max-width: 200px; height: auto; border-radius: 8px; display: block; margin: 0 auto;">
                             <h1>{{ record.war_info.clan.name }}</h1>
+                            <h4><strong>Tag:</strong> {{ record.war_info.clan.tag }}</h4>
                             <h4><strong>Attacks:</strong> {{ record.war_info.clan.attacks }}</h4>
                             <h4><strong>Stars:</strong> {{ record.war_info.clan.stars }}</h4>
                             <h4><strong>Total Destruction:</strong> {{ record.war_info.clan.destructionPercentage|floatformat:2 }}%</h4>
@@ -92,6 +97,7 @@
                         <div class="clan-info right">
                             <img src="{{ record.war_info.opponent.badgeUrls.medium }}" alt="{{ record.war_info.opponent.name }} Badge" style="max-width: 200px; height: auto; border-radius: 8px; display: block; margin: 0 auto;">
                             <h1>{{ record.war_info.opponent.name }}</h1>
+                            <h4><strong>Tag:</strong> {{ record.war_info.opponent.tag }}</h4>
                             <h4><strong>Attacks:</strong> {{ record.war_info.opponent.attacks }}</h4>
                             <h4><strong>Stars:</strong> {{ record.war_info.opponent.stars }}</h4>
                             <h4><strong>Total Destruction:</strong> {{ record.war_info.opponent.destructionPercentage|floatformat:2 }}%</h4>
@@ -136,7 +142,6 @@
                 <div class="war-section" style="background-color: white;">
                     <div>
                        <h2>{{ record.month_year|date:"F Y" }}</h2>
-                       <h4>{{ record.current_time }}</h4>
                        <p><strong>Number of Wars:</strong> {{ record.num_wars|floatformat:0 }}</p>
                        <p><strong>Win rate:</strong> {{ record.win_rate|mul:100|floatformat:2 }}%</p>
                        <p><strong>Percent of Attacks Completed:</strong> {{ record.percent_attacks_completed|mul:100|floatformat:2 }}%</p>
@@ -160,7 +165,7 @@
                         </thead>
                         <tbody>
                             {% for data in summary_member_data %}
-                                {% if data.current_time == record.current_time %}
+                                {% if data.month_year == record.month_year %}
                                     <tr>
                                         <td>{{data.player.monthly_data.all.0.data.name}}</td>
                                         <td>#{{data.player}}</td>

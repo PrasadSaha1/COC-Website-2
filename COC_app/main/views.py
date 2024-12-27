@@ -105,7 +105,9 @@ def clan_search(request):
 @login_required(login_url='/register/')
 def toggle_save_clan(request, clan_tag):
     saved_clan = SavedClan.objects.filter(user=request.user, clan_tag=clean_tag(clan_tag)).first()
-    clan_name = find_clan_with_tag(clean_tag(clan_tag), ["name"])
+    clan_data = get_all_clan_data(clean_tag(clan_tag))
+    member_data = get_member_data(clean_tag(clan_tag))
+    is_being_tracked = GlobalClan.objects.filter(clan_tag=clean_tag(clan_tag)).exists()
     saved_clan_count = SavedClan.objects.filter(user=request.user).count()
     change = None
 
@@ -118,33 +120,14 @@ def toggle_save_clan(request, clan_tag):
     else:
         change = "too_many_clans"
 
-    # Get the list of clans to display
-    clans_data = []
-    for clan in SavedClan.objects.filter(user=request.user):
-        clan_info = find_clan_with_tag(clean_tag(clan.clan_tag), ["name", "tag", "type", "description", "members", "clanPoints"])
-        clan_badge = get_clan_badge(clean_tag(clan.clan_tag))
-        
-        # Prepare the data to pass to the template
-        clans_data.append({
-            'name': clan_info[0],
-            'tag': clan_info[1],
-            'type': clan_info[2],
-            'description': clan_info[3],
-            'members': clan_info[4],
-            'clan_points': clan_info[5],
-            'badge': clan_badge,
-        })
+    return render(request, "main/view_clan.html", {"member_data": member_data, "clan_tag": clan_tag, "mode": "general", "clan_data": clan_data, "is_being_tracked": is_being_tracked, "change": change})
 
-    return render(request, "main/my_clans.html", {
-        "change": change,
-        "clan_name": clan_name[0],
-        "clans": clans_data  # Pass the clans data here
-    })
 
 @login_required(login_url='/register/')
 def toggle_save_player(request, player_tag):
+    player = get_all_player_data(clean_tag(player_tag))
     saved_player = SavedPlayer.objects.filter(user=request.user, player_tag=clean_tag(player_tag)).first()
-    player_name = get_all_player_data(clean_tag(player_tag))["name"]
+    is_being_tracked = GlobalPlayer.objects.filter(player_tag=clean_tag(player_tag)).exists()
     saved_player_count = SavedPlayer.objects.filter(user=request.user).count()
     change = None
 
@@ -156,17 +139,9 @@ def toggle_save_player(request, player_tag):
         change = "player_saved"
     else:
         change = "too_many_players"
-    players_data = []
 
-    for player in SavedPlayer.objects.filter(user=request.user):
-        data = get_all_player_data(clean_tag(player.player_tag))
-        players_data.append(data)
+    return render(request, "main/view_player.html", {"player": player, "is_being_tracked": is_being_tracked, "change": change})
 
-    return render(request, "main/my_players.html", {
-        "change": change,
-        "player_name": player_name,
-        "players": players_data
-    })
 
 
 @login_required(login_url='/register/')
@@ -196,6 +171,10 @@ def view_clan(request, clan_tag, mode):
     member_data = get_member_data(clean_tag(clan_tag))
     clan_data = get_all_clan_data(clean_tag(clan_tag))
     is_being_tracked = GlobalClan.objects.filter(clan_tag=clean_tag(clan_tag)).exists()
+    is_saved = SavedClan.objects.filter(user=request.user, clan_tag=clean_tag(clan_tag)).first()
+
+    if mode not in ["general", "home_village", "builder_base", "all"]:
+        mode = "general"
 
     if request.method == "POST" and not is_being_tracked:
         if 'track_clan_history' in request.POST:
@@ -208,7 +187,7 @@ def view_clan(request, clan_tag, mode):
                 if not player_is_being_tracked:
                     new_player = GlobalPlayer(player_tag=clean_tag(tag))
                     new_player.save() 
-    return render(request, "main/view_clan.html", {"member_data": member_data, "clan_tag": clan_tag, "mode": mode, "clan_data": clan_data, "is_being_tracked": is_being_tracked})
+    return render(request, "main/view_clan.html", {"member_data": member_data, "clan_tag": clan_tag, "mode": mode, "clan_data": clan_data, "is_being_tracked": is_being_tracked, "is_saved": is_saved})
 
 @login_required(login_url='/register/')
 def my_players(request):
@@ -223,11 +202,14 @@ def my_players(request):
 def view_player(request, player_tag):
     player = get_all_player_data(clean_tag(player_tag))
     is_being_tracked = GlobalPlayer.objects.filter(player_tag=clean_tag(player_tag)).exists()
-    if request.method == "POST" and not is_being_tracked:
+    is_saved = SavedPlayer.objects.filter(user=request.user, player_tag=clean_tag(player_tag)).first()
+    start_tracking_player = request.POST.get('start_tracking_player', 'no')
+    
+    if start_tracking_player == "yes":
         new_player = GlobalPlayer(player_tag=clean_tag(player_tag))
         new_player.save() 
         is_being_tracked = True
-    return render(request, "main/view_player.html", {"player": player, "is_being_tracked": is_being_tracked})
+    return render(request, "main/view_player.html", {"player": player, "is_being_tracked": is_being_tracked, "is_saved": is_saved})
 
 
 @login_required(login_url='/register/')
@@ -258,9 +240,6 @@ def view_clan_general_history(request, clan_tag):
         player, created = GlobalPlayer.objects.get_or_create(player_tag=player_tag)
         for month in player.monthly_data.all():
             summary_member_data.append(month)
-    
-    for data in summary_member_data:
-        pass
 
     return render(request, "main/view_clan_general_history.html", 
                   {"clan": clan, "monthly_data_general": monthly_data_general, "summary_member_data": summary_member_data,

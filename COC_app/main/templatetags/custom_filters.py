@@ -1,4 +1,3 @@
-# myapp/templatetags/custom_filters.py
 from django import template
 import pytz
 from datetime import datetime, date
@@ -71,13 +70,13 @@ def equipment_to_hero(equipment):
         return "Minion Prince"
     elif equipment in ["Eternal Tome", "Life Gem", "Rage Gem", "Healing Tome", "Fireball", "Lavaloon Puppet"]:
         return "Grand Warden"
-    elif equipment in ["Royal Gem", "Seeking Shield", "Hog Rider Puppet", "Haste Vial", "Rocket Spear"]:
+    elif equipment in ["Royal Gem", "Seeking Shield", "Hog Rider Puppet", "Haste Vial", "Rocket Spear", "Electro Boots"]:
         return "Royal Champion"
     return "New equipment - not yet configured"
 
 @register.filter
-def check_in_use(equipment, player):
-    # pass
+def check_in_use_1(equipment, player):
+    """Returns a string (yes or no)"""
     for hero in player["heroes"]:
         try:
             for hero_equipment in hero["equipment"]:
@@ -86,6 +85,18 @@ def check_in_use(equipment, player):
         except KeyError:
             pass
     return "No"
+
+@register.filter
+def check_in_use_2(equipment, player):
+    """This returns a bool (True or False)"""
+    for hero in player["heroes"]:
+        try:
+            for hero_equipment in hero["equipment"]:
+                if equipment == hero_equipment["name"]:
+                    return True
+        except KeyError:
+            pass
+    return False
 
 @register.filter
 def not_in(value, arg):
@@ -247,3 +258,24 @@ def role_display(role):
         "member": "Member",
     }
     return role_map.get(role, role) 
+
+@register.filter
+def break_loop(value, arg):
+    if value == arg:
+        raise StopIteration
+    return value
+
+@register.filter
+def sort_equipment(equipment, player):
+    hero_order = ["Barbarian King", "Archer Queen", "Minion Prince", "Grand Warden", "Royal Champion"]
+    equipment.sort(key=lambda x: (hero_order.index(equipment_to_hero(x["name"])), not check_in_use_2(x["name"], player)))
+    return equipment
+
+@register.filter
+def last_item(queryset):
+    """
+    Returns the last item in a queryset or list.
+    """
+    if queryset:
+        return queryset[-1]  # Get the last item
+    return None

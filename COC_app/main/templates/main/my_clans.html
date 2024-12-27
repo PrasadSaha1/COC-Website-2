@@ -3,18 +3,7 @@
 
 {% block content %}
 <div id="content">
-    {% if change %}
-        <div class="alert {% if change == 'too_many_clans' %}alert-danger{% else %}alert-success{% endif %} mt-3">
-            {% if change == "clan_saved" %}
-                <strong>{{ clan_name }} saved</strong>
-            {% elif change == "clan_removed" %}
-                <strong>{{ clan_name }} removed</strong>
-            {% elif change == "too_many_clans" %}
-                <strong>You cannot save more than 5 clans. Please remove one before adding another.</strong>
-            {% endif %}
-        </div>
-    {% endif %}
-    <h1>My Clans</h1>
+    <h1>Saved Clans</h1>
     
     <div class="clan-grid">
         {% for clan in clans %}

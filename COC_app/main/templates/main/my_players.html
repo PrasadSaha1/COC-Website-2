@@ -3,18 +3,7 @@
 
 {% block content %}
 <div id="content">
-    {% if change %}
-        <div class="alert {% if change == 'too_many_players' %}alert-danger{% else %}alert-success{% endif %} mt-3">
-            {% if change == "player_saved" %}
-                <strong>{{ player_name }} saved</strong>
-            {% elif change == "player_removed" %}
-                <strong>{{ player_name }} removed</strong>
-            {% elif change == "too_many_players" %}
-                <strong>You cannot save more than 10 players. Please remove one before adding another.</strong>
-            {% endif %}
-        </div>
-    {% endif %}
-    <h1>My Players</h1>
+    <h1>Saved Players</h1>
     
     <div class="clan-grid">
         {% for player in players %}
