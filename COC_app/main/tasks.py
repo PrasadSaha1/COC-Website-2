@@ -40,12 +40,14 @@ def fetch_war_info(clan_tag, time):
     """Runs based on get_clan_war_status"""
     clan_tag = clean_tag(clan_tag)
     war_info = get_clan_war_information(clan_tag)
+    point_fetched = "-15"
 
     # change the second == to != 
     if war_info == {'reason': 'accessDenied'} or (war_info["state"] != 'warEnded' and time == 2):
         return  
     
     if time == 2:
+        point_fetched = "+4"
         recent_instance = ClanWarInformation.objects.latest('id')
         recent_instance.delete()
 
@@ -74,18 +76,17 @@ def fetch_war_info(clan_tag, time):
             num_attacks = len(player["attacks"])
             attack_1_stars = player["attacks"][0]["stars"]
             attack_1_destruction = player["attacks"][0]["destructionPercentage"]
-            num_missed_attacks -= 1
             attack_2_stars = player["attacks"][1]["stars"]
             attack_2_destruction = player["attacks"][1]["destructionPercentage"]
-            num_missed_attacks -= 1
         except KeyError:
             pass
         except IndexError:
             pass
+        num_missed_attacks = war_info["attacksPerMember"] - num_attacks
 
         PlayerWarInformation.objects.create(player=player_info, date_started=converted_date, clan_name=clan_name, clan_tag=clan_tag,
                                             roster_number=roster_number, num_attacks=num_attacks, attack_1_stars=attack_1_stars, num_missed_attacks=num_missed_attacks,
-                                            attack_1_destruction=attack_1_destruction, attack_2_stars=attack_2_stars, attack_2_destruction=attack_2_destruction)
+                                            attack_1_destruction=attack_1_destruction, attack_2_stars=attack_2_stars, attack_2_destruction=attack_2_destruction, point_fetched=point_fetched)
 
 @shared_task
 def get_monthly_clan_war_info():

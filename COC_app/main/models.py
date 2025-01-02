@@ -70,6 +70,7 @@ class ClanWarInformation(models.Model):
     clan = models.ForeignKey(GlobalClan, on_delete=models.CASCADE, related_name='war_information')
     current_time = models.CharField(default="N/A", max_length=50)
     war_info = models.JSONField(default=list)
+    point_fetched = models.CharField(max_length=50, default="+4")  # +4 or -15
 
 class ClanMonthlyDataGeneral(models.Model):
     clan = models.ForeignKey(GlobalClan, on_delete=models.CASCADE, related_name='monthly_data_general')

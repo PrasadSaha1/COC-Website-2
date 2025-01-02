@@ -1,5 +1,9 @@
 {% extends 'main/base.html' %}
 
+{% block title %}
+Clan/Player Search
+{% endblock %}
+
 {% block content %}
 <div id="content" class="clan-search-container">
     <h1>Clan/Player Search</h1>
@@ -50,19 +54,20 @@
                 <input type="hidden" name="clan_tag" value="{{ clan_tag }}">
                 <button type="submit" name="view_clan" class="view-button">View Clan</button>
             </form>
-
-            {% if saved %}
+            {% if saved is True %}
                 <form method="post" action="{% url 'toggle_save_clan' clan_tag %}" class="button-form">
                     {% csrf_token %}
                     <input type="hidden" name="clan_tag" value="{{ clan_tag }}">
                     <button type="submit" name="remove_clan" class="remove-button">Remove Clan</button>
                 </form>
-            {% else %}
+            {% elif saved is False %}
                 <form method="post" action="{% url 'toggle_save_clan' clan_tag %}" class="button-form">
                     {% csrf_token %}
                     <input type="hidden" name="clan_tag" value="{{ clan_tag }}">
                     <button type="submit" name="save_clan" class="save-button">Save Clan</button>
                 </form>
+            {% else %}
+                <button name="save_clan" class="save-button" onclick="showConfirmationModal({ type: 'clan' });">Save Clan</button>
             {% endif %}
         </div>
     {% elif player_data and player_data != "error" %}
@@ -79,18 +84,20 @@
             <button type="submit" name="view_player" class="view-button">View Player</button>
         </form>
 
-        {% if saved %}
+        {% if saved is True %}
             <form method="post" action="{% url 'toggle_save_player' player_data.tag  %}" class="button-form">
                 {% csrf_token %}
                 <input type="hidden" name="clan_tag" value="{{ player_data.tag  }}">
                 <button type="submit" name="remove_clan" class="remove-button">Remove Player</button>
             </form>
-        {% else %}
+        {% elif saved is False %}
             <form method="post" action="{% url 'toggle_save_player' player_data.tag  %}" class="button-form">
                 {% csrf_token %}
                 <input type="hidden" name="clan_tag" value="{{ player_data.tag  }}">
                 <button type="submit" name="save_clan" class="save-button">Save Player</button>
             </form>
+        {% else %}
+            <button name="save_clan" class="save-button" onclick="showConfirmationModal({ type: 'player' });">Save Player</button>
         {% endif %}
     </div>
     {% endif %}
@@ -261,5 +268,47 @@
         font-weight: bold;
     }
 </style>
+
+{% include 'main/modal_confirmation.html' %}
+
+<script>
+
+    function showConfirmationModal({
+        type,
+        cancelCallback = () => {}
+    } = {}) {
+        let title = "Log in to Proceed";
+        let message = `Log in to save ${type}s!`;
+        let cancelText = "Okay";
+
+        // Update modal title and body
+        document.getElementById("confirmationModalLabel").innerText = title;
+        document.getElementById("confirmationModalBody").innerText = message;
+
+        // Update button labels
+        const confirmButton = document.getElementById("confirmActionButton");
+        const cancelButton = document.getElementById("cancelButton");
+        cancelButton.innerText = cancelText;
+        confirmButton.classList.add("d-none");
+
+        // Remove existing event listeners to avoid duplicates
+        const newConfirmButton = confirmButton.cloneNode(true);
+        confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
+
+        const newCancelButton = cancelButton.cloneNode(true);
+        cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
+
+        newCancelButton.addEventListener("click", () => {
+            cancelCallback();
+            $("#confirmationModal").modal("hide");
+        });
+
+        // Show the modal
+        $("#confirmationModal").modal("show");
+    }
+
+
+</script>
+
 {% endblock %}
 {% endblock %}

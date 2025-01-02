@@ -2,6 +2,10 @@
 {% load static %}
 {% load custom_filters %}
 
+{% block title %}
+Clan General History for {{clan.name}}
+{% endblock %}
+
 <div id="content">
     {% block content %}
     <form method="post" action="{% url 'view_clan' clan.tag 'general' %}" class="button-form">
@@ -121,7 +125,7 @@
                                 {% if member.month_year == record.month_year %} 
                                 <tr>
                                     {% if type_of_member_data == "general" %}
-                                        <td><a href="{% url 'view_player_history' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
+                                        <td><a href="{% url 'view_player' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
                                         <td>{{ member.data.tag }}</td>
                                         <td>{% role_display member.data.role %}</td>
                                         <td>{{ member.data.donations }}</td>
@@ -134,14 +138,14 @@
                                             <img src="{% static 'images/unranked_badge.webp' %}" style="max-width: 150px;">
                                         {% endif %}                                            </td>
                                         <td>
-                                            <a href="{% url 'view_player_history' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
+                                            <a href="{% url 'view_player' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
                                         <td>{{ member.data.townHallLevel }}</td>
                                         <td>{{ member.data.trophies }}</td>
                                     {% elif type_of_member_data == "builder_base" %}
-                                        <td><a href="{% url 'view_player_history' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
+                                        <td><a href="{% url 'view_player' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
                                         <td>{{ member.data.builderBaseTrophies }}</td>
                                     {% elif type_of_member_data == "clan_capital" %}
-                                        <td><a href="{% url 'view_player_history' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
+                                        <td><a href="{% url 'view_player' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
                                         <td>{{ member.data.clanCapitalContributions }}</td>
                                     {% elif type_of_member_data == "all" %}
                                         <td>    
@@ -151,7 +155,7 @@
                                             <img src="{% static 'images/unranked_badge.webp' %}" style="max-width: 150px;">
                                         {% endif %}                                            </td>
                                         <td>
-                                            <a href="{% url 'view_player_history' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
+                                            <a href="{% url 'view_player' member.player %}" style="color: inherit; text-decoration: none;">{{ member.data.name }}</a></td>
                                         <td>{{ member.data.tag }}</td>
                                         <td>{% role_display member.data.role %}</td>
                                         <td>{{ member.data.donations }}</td>

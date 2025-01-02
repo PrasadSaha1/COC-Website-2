@@ -1,6 +1,10 @@
 {% extends 'main/base.html' %}
 {% load custom_filters %}
 
+{% block title %}
+{{clan_data.name}}
+{% endblock %}
+
 <div id="content" style="position: relative;">
     {% block content %}
     {% if change %}
@@ -16,7 +20,7 @@
     {% endif %}
     <form method="post" action="{% url 'my_clans' %}" class="button-form">
         {% csrf_token %}
-        <button type="submit" name="back" class="view-button">Back</button>
+        <button type="submit" name="back" class="btn btn-primary">Back</button>
     </form>
      <img src="{{ clan_data.badgeUrls.medium }}" alt="{{ clan_data.name }} Badge" style="max-width: 200px; height: auto; border-radius: 8px; display: block; margin: 0 auto;">
      <div style="text-align: center;">
@@ -31,7 +35,7 @@
             <form method="post" action="{% url 'view_clan' clan_tag mode %}" class="button-form">
                 {% csrf_token %}
                 <input type="hidden" name="clan_tag" value="{{ clan.tag }}">
-                <button type="submit" name="track_clan_history" class="view-button">Start Tracking Clans's History</button>
+                <button type="submit" name="track_clan_history" class="btn btn-primary">Start Tracking Clans's History</button>
             </form>
         </div>
     {% else %}
@@ -40,16 +44,34 @@
             <form method="post" action="{% url 'view_clan_war_history' clan_tag %}" class="button-form">
                 {% csrf_token %}
                 <input type="hidden" name="clan_tag" value="{{ clan.tag }}">
-                <button type="submit" name="view_clan_war_history" class="view-button">View Clan War History</button>
+                <button type="submit" name="view_clan_war_history" class="btn btn-primary">View Clan War History</button>
             </form>
         </div>
         <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
             <form method="post" action="{% url 'view_clan_general_history' clan_tag %}" class="button-form">
                 {% csrf_token %}
                 <input type="hidden" name="clan_tag" value="{{ clan.tag }}">
-                <button type="submit" name="view_clan_history" class="view-button">View Clan General History</button>
+                <button type="submit" name="view_clan_history" class="btn btn-primary">View Clan General History</button>
             </form>
         </div>
+    {% endif %}
+
+    {% if is_saved is True %}
+        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
+            <form method="post" action="{% url 'view_clan' clan_tag 'general' %}" class="button-form">
+                {% csrf_token %}
+                <input type="hidden" name="clan_tag" value="{{ clan_tag }}">
+                <button type="submit" name="unsave_clan" class="btn btn-primary" value="yes">Unsave Clan</button>
+            </form>
+        </div>
+    {% elif is_saved is False %}
+    <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
+        <form method="post" action="{% url 'view_clan' clan_tag 'general' %}" class="button-form">
+            {% csrf_token %}
+            <input type="hidden" name="clan_tag" value="{{ clan_tag }}">
+            <button type="submit" name="save_clan" class="btn btn-primary" value="yes">Save Clan</button>
+        </form>
+    </div>
     {% endif %}
 
     <h2 style="text-align: center; margin-top: 20px;">Clan Information</h2>

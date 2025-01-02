@@ -4,82 +4,106 @@ from django.contrib.auth import authenticate, logout, update_session_auth_hash
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth.models import User
-
+from .forms import ChangeUsernameForm, ChangePasswordForm, AddEmailForm
 from main.api import find_clan_with_tag, get_clan_badge, clean_tag, get_member_data, get_all_clan_data, get_all_player_data
 from .models import SavedClan, SavedPlayer, GlobalPlayer, GlobalClan
 from main.api import *
-from datetime import datetime, timedelta
+from .helpers import determine_email_level
+from register.send_emails import send_verification_email
 
-@login_required(login_url='/register/')
-def home(response):
-    return render(response, "main/home.html", {})
+def home(request):
+    context = {
+        'is_logged_in': request.user.is_authenticated,
+        'user': request.user if request.user.is_authenticated else None,
+    }
+    return render(request, "main/home.html", context)
 
-@login_required
-def settings(response):
-    return render(response, "main/settings.html", {})
+@login_required(login_url='/')
+def settings(request):
+    return render(request, "main/settings.html", {"email_level": determine_email_level(request.user)})
 
-@login_required(login_url='/register/')
+@login_required(login_url='/')
 def logout_view(request):
     logout(request)
-    return redirect("register:create_account")
+    return redirect("home")
 
+@login_required(login_url='/')
+def delete_account(request):
+    request.user.delete()
+    return redirect("home")
 
-@login_required(login_url='/register/')
+@login_required(login_url='/')
 def change_username(request):
     if request.method == 'POST':
-        new_username = request.POST.get('new_username')
-        password = request.POST.get('password')
+        form = ChangeUsernameForm(request.POST)
+        if form.is_valid():
+            new_username = form.cleaned_data['new_username']
+            password = form.cleaned_data['password']
+            
+            # Authenticate the user with the provided password
+            user = authenticate(username=request.user.username, password=password)
+            if user is not None:
+                # If password is correct, update the username
+                request.user.username = new_username
+                request.user.save()
+                return render(request, "main/settings.html", {"email_level": determine_email_level(request.user), "message": "Username changed successfully!"})
+            else:
+                form.add_error('password', 'Incorrect password')
+    else:
+        form = ChangeUsernameForm()
 
-        if new_username and password:
-            # Check if the username is already taken
-            if User.objects.filter(username=new_username).exists():
-                return JsonResponse({'status': 'taken'})
+    return render(request, 'main/change_username.html', {'form': form})
 
-            # Check if the provided password is correct
-            user = authenticate(request, username=request.user.username, password=password)
-            if user is None:
-                return JsonResponse({'status': 'incorrect_password'})
-
-            # Change the username and save
-            request.user.username = new_username
-            request.user.save()
-            messages.success(request, 'Username successfully changed.')
-            return JsonResponse({'status': 'success'})
-        else:
-            return JsonResponse({'status': 'error'})
-    return render(request, 'main/change_username.html')
-
-
-@login_required(login_url='/register/')
+@login_required(login_url='/')
 def change_password(request):
     if request.method == 'POST':
-        current_password = request.POST.get('current_password')
-        new_password = request.POST.get('new_password')
-        confirm_password = request.POST.get('confirm_password')
+        form = ChangePasswordForm(request.POST)
+        if form.is_valid():
+            current_password = form.cleaned_data['current_password']
+            new_password = form.cleaned_data['new_password']
+            confirm_new_password = form.cleaned_data["confirm_new_password"]
+            if new_password != confirm_new_password:
+                return render(request, 'main/change_password.html', {'form': form, "success_message": "Passwords do not match", "is_error": True})
+            
+            # Authenticate user with current password
+            user = authenticate(username=request.user.username, password=current_password)
+            if user is not None:
+                # Update the user's password
+                user.set_password(new_password)
+                user.save()
 
-        # Check if the current password is correct
-        user = authenticate(request, username=request.user.username, password=current_password)
-        if user is None:
-            return JsonResponse({'status': 'incorrect_password'})
+                # Re-authenticate the user to update session authentication
+                update_session_auth_hash(request, user)
 
-        # Check if the new passwords match
-        if new_password != confirm_password:
-            return JsonResponse({'status': 'password_mismatch'})
+                return render(request, "main/settings.html", {"email_level": determine_email_level(request.user), "message": "Password changed successfully!"})
+            else:
+                form.add_error('current_password', 'Incorrect current password')
+    else:
+        form = ChangePasswordForm()
 
-        # Update the password and save the user
-        user.set_password(new_password)
-        user.save()
+    return render(request, 'main/change_password.html', {'form': form})
 
-        # Keep the user logged in after changing the password
-        update_session_auth_hash(request, user)
+@login_required(login_url='/')
+def add_email(request):
+    form = AddEmailForm(request.POST or None)
+    
+    if form.is_valid():
+        email = form.cleaned_data['email']
+        request.user.email = email
+        request.user.save()
+        send_verification_email(request.user, request)
+        return render(request, "main/settings.html", {"email_level": determine_email_level(request.user), "message": "Email added succesfully. Please verify it by checking your inbox."})
+    
+    return render(request, 'main/add_email.html', {"form": form})
 
-        messages.success(request, 'Password successfully changed.')
-        return JsonResponse({'status': 'success'})
+@login_required(login_url='/')
+def resend_verification_email(request):
+    send_verification_email(request.user, request)
+    return render(request, "main/settings.html", {"email_level": determine_email_level(request.user), "message": "Check your inbox for a link to verify your email"})
+    
 
-    return render(request, "main/change_password.html", {})
-
-@login_required(login_url='/register/')
 def clan_search(request):
+    in_database = "not_logged_in"
     if request.method == "POST":
         search_type = request.POST.get("search_type") 
         if search_type == "clan":
@@ -87,7 +111,11 @@ def clan_search(request):
             try:
                 clan_name, clan_tag, clan_type, clan_description, clan_members, clan_points = find_clan_with_tag(old_tag, ["name", "tag", "type", "description", "members", "clanPoints"])
                 clan_badge = get_clan_badge(old_tag)
-                in_database = SavedClan.objects.filter(user=request.user, clan_tag=old_tag).first()
+                if request.user.is_authenticated:
+                    if SavedClan.objects.filter(user=request.user, clan_tag=old_tag).first():
+                        in_database = True
+                    else:
+                        in_database = False
             except KeyError:
                 return render(request, "main/clan_search.html", {"error": "clan"})
             return render(request, "main/clan_search.html", {"clan_name": clan_name, "clan_tag": clan_tag, "clan_type": clan_type,
@@ -95,20 +123,25 @@ def clan_search(request):
         else:
             tag = clean_tag(request.POST.get("clan_tag"))
             player_data = get_all_player_data(clean_tag(tag))
-            in_database = SavedPlayer.objects.filter(user=request.user, player_tag=tag).first()
+            if request.user.is_authenticated:
+                if SavedPlayer.objects.filter(user=request.user, player_tag=tag).first():
+                    in_database = True
+                else:
+                    in_database = False
             if player_data == {'reason': 'notFound'}:
                 return render(request, "main/clan_search.html", {"error": "player", "player_data": "error"})
             return render(request, "main/clan_search.html", {"player_data": player_data, "saved": in_database})
     return render(request, "main/clan_search.html")
 
 
-@login_required(login_url='/register/')
+@login_required(login_url='/')
 def toggle_save_clan(request, clan_tag):
     saved_clan = SavedClan.objects.filter(user=request.user, clan_tag=clean_tag(clan_tag)).first()
     clan_data = get_all_clan_data(clean_tag(clan_tag))
     member_data = get_member_data(clean_tag(clan_tag))
     is_being_tracked = GlobalClan.objects.filter(clan_tag=clean_tag(clan_tag)).exists()
-    saved_clan_count = SavedClan.objects.filter(user=request.user).count()
+    if request.user.is_authenticated:
+        saved_clan_count = SavedClan.objects.filter(user=request.user).count()
     change = None
 
     if saved_clan:
@@ -120,10 +153,17 @@ def toggle_save_clan(request, clan_tag):
     else:
         change = "too_many_clans"
 
-    return render(request, "main/view_clan.html", {"member_data": member_data, "clan_tag": clan_tag, "mode": "general", "clan_data": clan_data, "is_being_tracked": is_being_tracked, "change": change})
+    is_saved = "not_logged_in"
+    if request.user.is_authenticated:
+        if SavedClan.objects.filter(user=request.user, clan_tag=clean_tag(clan_tag)).first():
+            is_saved = True
+        else:
+            is_saved = False
+
+    return render(request, "main/view_clan.html", {"member_data": member_data, "clan_tag": clan_tag, "mode": "general", "clan_data": clan_data, "is_being_tracked": is_being_tracked, "change": change, "is_saved": is_saved})
 
 
-@login_required(login_url='/register/')
+@login_required(login_url='/')
 def toggle_save_player(request, player_tag):
     player = get_all_player_data(clean_tag(player_tag))
     saved_player = SavedPlayer.objects.filter(user=request.user, player_tag=clean_tag(player_tag)).first()
@@ -140,11 +180,17 @@ def toggle_save_player(request, player_tag):
     else:
         change = "too_many_players"
 
-    return render(request, "main/view_player.html", {"player": player, "is_being_tracked": is_being_tracked, "change": change})
+    is_saved = "not_logged_in"
+    if request.user.is_authenticated:
+        if SavedPlayer.objects.filter(user=request.user, player_tag=clean_tag(player_tag)).first():
+            is_saved = True
+        else:
+            is_saved = False
+
+    return render(request, "main/view_player.html", {"player": player, "is_being_tracked": is_being_tracked, "change": change, "is_saved": is_saved})
 
 
-
-@login_required(login_url='/register/')
+@login_required(login_url='/')
 def my_clans(request):
     clans_data = []
 
@@ -166,12 +212,37 @@ def my_clans(request):
 
     return render(request, "main/my_clans.html", {'clans': clans_data})
 
-@login_required(login_url='/register/')
 def view_clan(request, clan_tag, mode):
+    is_saved = "not_logged_in"
+    change = None
     member_data = get_member_data(clean_tag(clan_tag))
     clan_data = get_all_clan_data(clean_tag(clan_tag))
     is_being_tracked = GlobalClan.objects.filter(clan_tag=clean_tag(clan_tag)).exists()
-    is_saved = SavedClan.objects.filter(user=request.user, clan_tag=clean_tag(clan_tag)).first()
+    if request.user.is_authenticated:
+        saved_clan_count = SavedClan.objects.filter(user=request.user).count()
+
+    save_clan = request.POST.get('save_clan', 'no')
+    unsave_clan = request.POST.get('unsave_clan', 'no')
+    
+    if request.user.is_authenticated:
+        if SavedClan.objects.filter(user=request.user, clan_tag=clean_tag(clan_tag)).first():
+            is_saved = True
+        else:
+            is_saved = False
+
+    if save_clan == "yes":
+        if saved_clan_count < 10:
+            new_clan = SavedClan(user=request.user, clan_tag=clean_tag(clan_tag))
+            new_clan.save()
+            change = "clan_saved"
+        else:
+            change = "too_many_clans"
+        is_saved = True
+    if unsave_clan == "yes":
+        old_clan = SavedClan.objects.get(user=request.user, clan_tag=clean_tag(clan_tag))
+        old_clan.delete()
+        change = "clan_removed"
+        is_saved = False
 
     if mode not in ["general", "home_village", "builder_base", "all"]:
         mode = "general"
@@ -187,9 +258,10 @@ def view_clan(request, clan_tag, mode):
                 if not player_is_being_tracked:
                     new_player = GlobalPlayer(player_tag=clean_tag(tag))
                     new_player.save() 
-    return render(request, "main/view_clan.html", {"member_data": member_data, "clan_tag": clan_tag, "mode": mode, "clan_data": clan_data, "is_being_tracked": is_being_tracked, "is_saved": is_saved})
+    return render(request, "main/view_clan.html", {"member_data": member_data, "clan_tag": clan_tag, "mode": mode, "clan_data": clan_data, 
+                                                   "is_being_tracked": is_being_tracked, "is_saved": is_saved, "change": change})
 
-@login_required(login_url='/register/')
+@login_required(login_url='/')
 def my_players(request):
     players_data = []
     for player in SavedPlayer.objects.filter(user=request.user):
@@ -198,21 +270,42 @@ def my_players(request):
 
     return render(request, "main/my_players.html", {'players': players_data})
 
-@login_required(login_url='/register/')
 def view_player(request, player_tag):
+    is_saved = "not_logged_in"
+    change = None
     player = get_all_player_data(clean_tag(player_tag))
     is_being_tracked = GlobalPlayer.objects.filter(player_tag=clean_tag(player_tag)).exists()
-    is_saved = SavedPlayer.objects.filter(user=request.user, player_tag=clean_tag(player_tag)).first()
+    if request.user.is_authenticated:
+        saved_player_count = SavedPlayer.objects.filter(user=request.user).count()
+        if SavedPlayer.objects.filter(user=request.user, player_tag=clean_tag(player_tag)).first():
+            is_saved = True
+        else:
+            is_saved = False
+
+    save_player = request.POST.get('save_player', 'no')
+    unsave_player = request.POST.get('unsave_player', 'no')
     start_tracking_player = request.POST.get('start_tracking_player', 'no')
-    
+    print(save_player, unsave_player, start_tracking_player)
     if start_tracking_player == "yes":
         new_player = GlobalPlayer(player_tag=clean_tag(player_tag))
         new_player.save() 
         is_being_tracked = True
-    return render(request, "main/view_player.html", {"player": player, "is_being_tracked": is_being_tracked, "is_saved": is_saved})
+    if save_player == "yes":
+        if saved_player_count < 10:
+            new_player = SavedPlayer(user=request.user, player_tag=clean_tag(player_tag))
+            new_player.save()
+            change = "player_saved"
+        else:
+            change = "too_many_players"
+        is_saved = True
+    if unsave_player == "yes":
+        old_player = SavedPlayer.objects.get(user=request.user, player_tag=clean_tag(player_tag))
+        old_player.delete()
+        change = "player_removed"
+        is_saved = False
+    return render(request, "main/view_player.html", {"player": player, "is_being_tracked": is_being_tracked, "is_saved": is_saved, "change": change})
 
 
-@login_required(login_url='/register/')
 def view_player_history(request, player_tag):
     player = get_all_player_data(clean_tag(player_tag))
     player_history = GlobalPlayer.objects.get(player_tag=clean_tag(player_tag))
@@ -222,7 +315,6 @@ def view_player_history(request, player_tag):
 
     return render(request, "main/view_player_history.html", {"player": player, "monthly_data": monthly_data})
 
-@login_required(login_url='/register/')
 def view_clan_general_history(request, clan_tag):
     clan = get_all_clan_data(clean_tag(clan_tag))
     clan_general_history = GlobalClan.objects.get(clan_tag=clean_tag(clan_tag))
@@ -246,7 +338,6 @@ def view_clan_general_history(request, clan_tag):
                    "type_of_data": type_of_data, "type_of_member_data": type_of_member_data})
 
 
-@login_required(login_url='/register/')
 def view_clan_war_history(request, clan_tag):
     clan = get_all_clan_data(clean_tag(clan_tag))
     clan_war_history = GlobalClan.objects.get(clan_tag=clean_tag(clan_tag))

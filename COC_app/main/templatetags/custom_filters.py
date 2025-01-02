@@ -1,6 +1,8 @@
 from django import template
 import pytz
 from datetime import datetime, date
+from main.api import clean_tag
+from main.models import PlayerMonthlyData, GlobalPlayer
 
 register = template.Library()
 
@@ -279,3 +281,26 @@ def last_item(queryset):
     if queryset:
         return queryset[-1]  # Get the last item
     return None
+
+@register.filter
+def format_email(email, email_level):
+    if not email:
+        return "None"
+
+    # Split the email into local part and domain
+    local, domain = email.split('@')
+    
+    # Keep the first 3 characters of the local part and mask the rest
+    censored_local = local[:3] + '*****'
+    
+    # Return the censored email
+    return f"{censored_local}@{domain} ({email_level})"
+
+@register.filter
+def fetch_player_name(tag):
+    # Clean the tag and find the corresponding player
+    data = GlobalPlayer.objects.get(player_tag=clean_tag(str(tag)))
+
+    # Retrieve the latest monthly data for the player
+    monthly_data = PlayerMonthlyData.objects.filter(player=data).last()
+    return monthly_data.data["name"]

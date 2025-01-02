@@ -2,6 +2,10 @@
 {% load static %}
 {% load custom_filters %}
 
+{% block title %}
+History for {{player.name}}
+{% endblock %}
+
 <div id="content">
     {% block content %}
     <form method="post" action="{% url 'view_player' player.tag %}" class="button-form">
@@ -20,6 +24,7 @@
             <div class="clan-container">
                 <h1>{{record.month_year|convert_date_to_month_year}}</h1>  <!-- Use the custom tag here -->
                 <h3 class="center-text">Fetched on {{record.day_fetched}} at {{record.time_fetched}} EST</h3>  <!-- Use the custom tag here -->
+                <p><strong>Name:</strong> {{ record.data.name }}</p>
                 <p><strong>Town Hall:</strong> {{ record.data.townHallLevel }}</p>
                 <p><strong>Builder Hall:</strong> {{ record.data.builderHallLevel }}</p>
 
@@ -55,7 +60,25 @@
                             </thead>
                             <tbody>
                                 {% for hero in record.data.heroes %}
-                                <tr>
+                                <tr 
+                                style="background-color: 
+                                    {% if hero.village == 'home' %}
+                                        {% if hero.level < hero.name|get_max_level_previous_TH:player.townHallLevel %}
+                                            #ffcccc; /* Red for rushed */
+                                        {% elif hero.level >= hero.name|get_max_level_current_TH:player.townHallLevel %}
+                                            #ccffcc; /* Green for maxed */
+                                        {% else %}
+                                            #ffffff; /* Default background */
+                                        {% endif %}
+                                    {% else %}
+                                        {% if hero.level < hero.name|get_max_level_previous_TH:player.builderHallLevel %}
+                                            #ffcccc; /* Red for rushed */
+                                        {% elif hero.level >= hero.name|get_max_level_current_TH:player.builderHallLevel %}
+                                            #ccffcc; /* Green for maxed */
+                                        {% else %}
+                                            #ffffff; /* Default background */
+                                        {% endif %}
+                                    {% endif %}">
                                     <td>
                                         <img src="{% static 'images/Avatar_Hero_'|add:hero.name|replace_space_with_underscore|add:'.webp' %}" style="max-width: 150px;">
                                     </td>                              

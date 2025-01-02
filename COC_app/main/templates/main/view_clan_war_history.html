@@ -2,6 +2,10 @@
 {% load static %}
 {% load custom_filters %}
 
+{% block title %}
+Clan War History for {{clan.name}}
+{% endblock %}
+
 <div id="content">
     {% block content %}
     <form method="post" action="{% url 'view_clan' clan.tag 'general' %}" class="button-form">
@@ -11,10 +15,10 @@
     <h1 class="centered-heading">War History for {{ clan.name }}</h1>
 
     {% if each_war_data == "N/A" %}
-        <h3 class="center-text">There is no history available for this clan. Ensure that the war log is public and check back after the next war</h3>
+        <h3 class="center-text">There is no history available for this clan. Ensure that the war log is public and check back after the next war.</h3>
     {% else %}
     <div class="clan-grid">
-        <h3 class="center-text">Information is fetched at the end of each war if the war log is public. Might be slightly inaccurate if players attack in the last four minutes of the war</h3>
+        <h4 class="center-text">If the war log is public, information is fetched 15 seconds before the end of the war, and if the clan has not started a new war, will be re-fetched 4 minutes after the war ends. Information fetched before the end of the war may be slightly inaccurate, so be sure to wait at least 4 minutes before starting another war.</h4>
         <h3>Options</h3>
 
         <div style="display: flex; justify-content: center; gap: 20px;">
@@ -83,6 +87,11 @@
                             <h1 class="result-heading">Draw</h1>
                         {% endif %}
                     {% endif %}
+                    {% if record.point_fetched == "+4" %}
+                        <h3>Information was fetched after the war ended and should be completly accurate.</h3>
+                    {% else %}
+                        <h3>Information was fetched before the war ended (-15 seconds) and may be inaccurate if players attacked near the end.</h3>
+                    {% endif %}
 
                     <div class="clan-container">
                         <div class="clan-info left">
@@ -122,7 +131,7 @@
                             <tbody>
                                 {% for member in record.war_info.clan.members %}
                                 <tr>
-                                    <td>{{member.name}}</td>
+                                    <td><a href="{% url 'view_player' member.tag %}" style="color: inherit; text-decoration: none;">{{ member.name }}</a></td>
                                     <td>{{member.tag}}</td>
                                     <td>{{member.mapPosition}}</td>
                                     <td>{{member.attacks|length}}</td>
@@ -147,7 +156,7 @@
                        <p><strong>Percent of Attacks Completed:</strong> {{ record.percent_attacks_completed|mul:100|floatformat:2 }}%</p>
                        <p><strong>Average War Size:</strong> {{ record.average_war_size|floatformat:2 }}</p>
                        <p><strong>Average Total Destruction:</strong> {{ record.average_total_destruction|floatformat:2 }}%</p>
-                       <p><strong>Average Stars per Player:</strong> {{ record.average_stars_per_player|floatformat:2 }} ({{record.average_stars_per_player|mul:33.3|floatformat:2 }}% of total stars)</p>                       
+                       <p><strong>Average Unique Stars per Player:</strong> {{ record.average_stars_per_player|floatformat:2 }} ({{record.average_stars_per_player|mul:33.3|floatformat:2 }}% of total stars)</p>                       
                     </div>
                 {% if include_member_data == "yes" %}
                     <h1 class="result-heading">Member Data</h1>
@@ -159,28 +168,28 @@
                                 <th onclick="sortTable('int', 2)">Number of Wars <span class="sort-arrow"></span></th>
                                 <th onclick="sortTable('int', 3)">Number of Attacks <span class="sort-arrow"></span></th>
                                 <th onclick="sortTable('int', 4)">Number of Missed Attacks <span class="sort-arrow"></span></th>
-                                <th onclick="sortTable('int', 5)">Average Stars per War <span class="sort-arrow"></span></th>
-                                <th onclick="sortTable('int', 6)">Average Destruction per War <span class="sort-arrow"></span></th>
+                                <th onclick="sortTable('int', 5)">Average Stars per Attack <span class="sort-arrow"></span></th>
+                                <th onclick="sortTable('int', 6)">Average Destruction per Attack <span class="sort-arrow"></span></th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for data in summary_member_data %}
                                 {% if data.month_year == record.month_year %}
                                     <tr>
-                                        <td>{{data.player.monthly_data.all.0.data.name}}</td>
+                                        <td><a href="{% url 'view_player' data.player %}" style="color: inherit; text-decoration: none;">{{data.player|fetch_player_name}}</a></td>
                                         <td>#{{data.player}}</td>
                                         <td>{{data.num_wars}}</td>
                                         <td>{{data.num_attacks}}</td>
                                         <td>{{data.num_missed_attacks}}</td>
-                                        <td>{{data.average_total_stars}}</td>
-                                        <td>{{data.average_total_destruction}}</td>
+                                        <td>{{data.average_total_stars|mul:.5|floatformat:2}} ({{data.average_total_stars|mul:16.67|floatformat:2 }}%)</td>
+                                        <td>{{data.average_total_destruction|mul:.5|floatformat:2}}%</td>
                                     </tr>
                                 {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
+                    {% endif %}
                 </div>
-                {% endif %}
             {% endfor %}
         {% endif %}
     </div>

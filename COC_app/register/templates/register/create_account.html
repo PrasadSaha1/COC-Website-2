@@ -1,16 +1,20 @@
-{% extends "main/base.html" %}
+{% extends "main/base_form.html" %}
 
 {% block title %}
-Create an Account
+Create Account
 {% endblock %}
-{% load crispy_forms_tags %}
+
+{% block additional_links %}
+<div class="text-center mb-4">
+    <p>
+        Already have an account? 
+        <a href="/register/login" class="text-primary">Login here</a>.
+    </p>
+</div>
+{% endblock %}
 
 {% block content %}
-    <h1>Create an Account</h1>
-    <p>Already have an account? Login <a href="/register/login">here.</a></p>
-    <form method="POST" class="form-group">
-        {% csrf_token %}
-        {{ form|crispy}}
-        <button type="submit" class="btn btn-success">Submit</button>
-    </form>
+{% with button_text="Create Account" title="Create an Account" %}
+{{ block.super }}
+{% endwith %}
 {% endblock %}
